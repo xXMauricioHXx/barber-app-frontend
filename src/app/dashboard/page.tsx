@@ -1,57 +1,86 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-  Button,
-  AppBar,
-  Toolbar,
-  Container,
-} from "@mui/material";
+import { Box, Typography, Paper, Card, CardContent } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
-import { signOut } from "@/lib/auth";
-import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      router.push("/login");
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    }
-  };
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            BarberApp - Dashboard
-          </Typography>
-          <Button color="inherit" onClick={handleLogout}>
-            Sair
-          </Button>
-        </Toolbar>
-      </AppBar>
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Dashboard
+      </Typography>
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Bem-vindo ao Dashboard!
-          </Typography>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Olá, {user?.email}
-          </Typography>
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            Você está autenticado com sucesso no sistema de agendamento da
-            barbearia.
-          </Typography>
-        </Box>
-      </Container>
-    </>
+      <Typography variant="h6" color="text.secondary" gutterBottom>
+        Bem-vindo, {user?.email}!
+      </Typography>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            lg: "repeat(4, 1fr)",
+          },
+          gap: 3,
+          mt: 3,
+        }}
+      >
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Agendamentos Hoje
+            </Typography>
+            <Typography variant="h4" color="primary">
+              5
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Clientes Ativos
+            </Typography>
+            <Typography variant="h4" color="success.main">
+              24
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Faturamento Mensal
+            </Typography>
+            <Typography variant="h4" color="warning.main">
+              R$ 2.850
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Avaliação Média
+            </Typography>
+            <Typography variant="h4" color="info.main">
+              4.8
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Próximos Agendamentos
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Aqui serão exibidos os próximos agendamentos do dia...
+        </Typography>
+      </Paper>
+    </Box>
   );
 }

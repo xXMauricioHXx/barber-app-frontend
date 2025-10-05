@@ -27,6 +27,7 @@ export default function Home() {
       alignItems="center"
       minHeight="100vh"
       gap={2}
+      bgcolor="background.paper"
     >
       <CircularProgress size={60} />
       <Typography variant="h6" color="text.secondary">
