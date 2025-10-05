@@ -2,6 +2,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   doc,
   updateDoc,
   deleteDoc,
@@ -53,6 +54,31 @@ export const clientService = {
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       throw new Error("Erro ao carregar clientes. Tente novamente.");
+    }
+  },
+
+  async getClientById(
+    barberId: string,
+    clientId: string
+  ): Promise<Client | null> {
+    try {
+      const clientRef = doc(db, COLLECTION_NAME, barberId, "clients", clientId);
+      const clientDoc = await getDoc(clientRef);
+
+      if (!clientDoc.exists()) {
+        return null;
+      }
+
+      const data = clientDoc.data();
+      return {
+        id: clientDoc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+      } as Client;
+    } catch (error) {
+      console.error("Erro ao buscar cliente:", error);
+      throw new Error("Erro ao carregar cliente. Tente novamente.");
     }
   },
 
