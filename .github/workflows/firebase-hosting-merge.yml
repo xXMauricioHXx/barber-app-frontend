@@ -32,15 +32,6 @@ jobs:
           echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID" >> $GITHUB_ENV
 
-      - name: (Optional) Setup Firebase Admin service account
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          echo "Escrevendo service account..."
-          echo "$FIREBASE_SERVICE_ACCOUNT" > $GITHUB_WORKSPACE/firebase-service-account.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-service-account.json" >> $GITHUB_ENV
-
       - name: Install dependencies & Build
         run: |
           npm ci
