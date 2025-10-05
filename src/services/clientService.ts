@@ -11,8 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Client, CreateClientData } from "@/types/client";
-
-const COLLECTION_NAME = "barbers";
+import { collectionSchema } from "./collection";
 
 export const clientService = {
   async createClient(
@@ -27,7 +26,12 @@ export const clientService = {
       };
 
       const docRef = await addDoc(
-        collection(db, COLLECTION_NAME, barberId, "clients"),
+        collection(
+          db,
+          collectionSchema.barbers.name,
+          barberId,
+          collectionSchema.barbers.subCollections.clients.name
+        ),
         clientData
       );
       return docRef.id;
@@ -40,7 +44,12 @@ export const clientService = {
   async getClients(barberId: string): Promise<Client[]> {
     try {
       const q = query(
-        collection(db, COLLECTION_NAME, barberId, "clients"),
+        collection(
+          db,
+          collectionSchema.barbers.name,
+          barberId,
+          collectionSchema.barbers.subCollections.clients.name
+        ),
         orderBy("createdAt", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -62,7 +71,13 @@ export const clientService = {
     clientId: string
   ): Promise<Client | null> {
     try {
-      const clientRef = doc(db, COLLECTION_NAME, barberId, "clients", clientId);
+      const clientRef = doc(
+        db,
+        collectionSchema.barbers.name,
+        barberId,
+        collectionSchema.barbers.subCollections.clients.name,
+        clientId
+      );
       const clientDoc = await getDoc(clientRef);
 
       if (!clientDoc.exists()) {
@@ -88,7 +103,13 @@ export const clientService = {
     data: Partial<CreateClientData>
   ): Promise<void> {
     try {
-      const clientRef = doc(db, COLLECTION_NAME, barberId, "clients", id);
+      const clientRef = doc(
+        db,
+        collectionSchema.barbers.name,
+        barberId,
+        collectionSchema.barbers.subCollections.clients.name,
+        id
+      );
       await updateDoc(clientRef, {
         ...data,
         updatedAt: new Date(),
@@ -101,7 +122,13 @@ export const clientService = {
 
   async deleteClient(barberId: string, id: string): Promise<void> {
     try {
-      const clientRef = doc(db, COLLECTION_NAME, barberId, "clients", id);
+      const clientRef = doc(
+        db,
+        collectionSchema.barbers.name,
+        barberId,
+        collectionSchema.barbers.subCollections.clients.name,
+        id
+      );
       await deleteDoc(clientRef);
     } catch (error) {
       console.error("Erro ao deletar cliente:", error);

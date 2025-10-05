@@ -1,26 +1,32 @@
 "use client";
 
-import { Box, Typography, Paper, Card, CardContent } from "@mui/material";
+import { Box, Typography, Card, CardContent } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
+import { useAppointments } from "@/context/AppointmentContext";
+import { AppointmentStatsCard } from "@/components";
 import React, { useEffect } from "react";
 import { barberService } from "@/services/barberService";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { refreshStats } = useAppointments();
   const [barber, setBarber] = React.useState<{ name: string } | null>(null);
 
-  useEffect(() => {
-    loadBarber();
-  }, []);
-
-  const loadBarber = async () => {
+  const loadBarber = React.useCallback(async () => {
     try {
       const barber = await barberService.getBarber(user?.uid || "");
       setBarber(barber);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    loadBarber();
+    if (user?.uid) {
+      refreshStats(user.uid);
+    }
+  }, [user?.uid, refreshStats, loadBarber]);
 
   return (
     <Box>
@@ -44,17 +50,7 @@ export default function DashboardPage() {
           mt: 3,
         }}
       >
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Agendamentos Hoje
-            </Typography>
-            <Typography variant="h4" color="primary">
-              5
-            </Typography>
-          </CardContent>
-        </Card>
-
+        <AppointmentStatsCard variant="today" showLastUpdated />
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -76,7 +72,6 @@ export default function DashboardPage() {
             </Typography>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -88,15 +83,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </Box>
-
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Próximos Agendamentos
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Aqui serão exibidos os próximos agendamentos do dia...
-        </Typography>
-      </Paper>
     </Box>
   );
 }

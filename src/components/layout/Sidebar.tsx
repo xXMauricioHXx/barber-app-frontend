@@ -43,7 +43,7 @@ const menuItems = [
   {
     text: "Agenda",
     icon: <ScheduleIcon />,
-    href: "/dashboard/schedule",
+    href: "/dashboard/appointments",
   },
   {
     text: "Configurações",

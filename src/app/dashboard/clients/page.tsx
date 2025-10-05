@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -20,6 +20,11 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Card,
+  CardContent,
+  Avatar,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -35,6 +40,8 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function ClientsPage() {
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -42,11 +49,7 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    loadClients();
-  }, []);
-
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -59,7 +62,13 @@ export default function ClientsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      loadClients();
+    }
+  }, [user?.uid, loadClients]);
 
   const handleNewClient = () => {
     router.push("/dashboard/clients/new");
@@ -124,6 +133,60 @@ export default function ClientsPage() {
     }
   };
 
+  const renderMobileClientCard = (client: Client) => (
+    <Card key={client.id} sx={{ mb: 2 }}>
+      <CardContent>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar sx={{ bgcolor: "primary.main" }}>
+              {client.name.charAt(0).toUpperCase()}
+            </Avatar>
+            <Box>
+              <Typography variant="h6" component="div">
+                {client.name}
+              </Typography>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}
+              >
+                <PhoneIcon fontSize="small" color="action" />
+                <Typography variant="body2" color="text.secondary">
+                  {client.phone}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <IconButton size="small" onClick={(e) => handleMenuOpen(e, client)}>
+            <MoreVertIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+          <Chip
+            label={client.plan}
+            color={getPlanColor(client.plan)}
+            size="small"
+          />
+          <Chip
+            label={client.paymentStatus}
+            color={getPaymentStatusColor(client.paymentStatus)}
+            size="small"
+          />
+        </Box>
+
+        <Typography variant="body2" color="text.secondary">
+          Cadastrado em: {formatDate(client.createdAt)}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Box>
       <Box
@@ -132,15 +195,18 @@ export default function ClientsPage() {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 2 : 0,
         }}
       >
-        <Typography variant="h4" component="h1">
+        <Typography variant={isMobile ? "h5" : "h4"} component="h1">
           Clientes
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleNewClient}
+          fullWidth={isMobile}
         >
           Novo Cliente
         </Button>
@@ -168,10 +234,13 @@ export default function ClientsPage() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleNewClient}
+            fullWidth={isMobile}
           >
             Cadastrar Primeiro Cliente
           </Button>
         </Paper>
+      ) : isMobile ? (
+        <Box>{clients.map(renderMobileClientCard)}</Box>
       ) : (
         <TableContainer component={Paper}>
           <Table>

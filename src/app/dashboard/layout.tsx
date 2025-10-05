@@ -5,6 +5,7 @@ import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
 import AuthGuard from "@/components/AuthGuard";
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
+import { AppointmentProvider } from "@/context/AppointmentContext";
 
 export default function DashboardLayout({
   children,
@@ -31,36 +32,38 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <Box sx={{ display: "flex" }}>
-        <CssBaseline />
+      <AppointmentProvider>
+        <Box sx={{ display: "flex" }}>
+          <CssBaseline />
 
-        <Navbar onMenuClick={handleSidebarToggle} />
+          <Navbar onMenuClick={handleSidebarToggle} />
 
-        <Sidebar
-          open={sidebarOpen}
-          onClose={handleSidebarClose}
-          variant={isMobile ? "temporary" : "persistent"}
-          isMobile={isMobile}
-        />
+          <Sidebar
+            open={sidebarOpen}
+            onClose={handleSidebarClose}
+            variant={isMobile ? "temporary" : "persistent"}
+            isMobile={isMobile}
+          />
 
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            mt: 8,
-            minHeight: "100vh",
-            backgroundColor: (theme) => theme.palette.grey[50],
-            transition: (theme) =>
-              theme.transitions.create(["margin"], {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
-          }}
-        >
-          {children}
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              p: 3,
+              mt: 8,
+              minHeight: "100vh",
+              backgroundColor: (theme) => theme.palette.grey[50],
+              transition: (theme) =>
+                theme.transitions.create(["margin"], {
+                  easing: theme.transitions.easing.easeOut,
+                  duration: theme.transitions.duration.enteringScreen,
+                }),
+            }}
+          >
+            {children}
+          </Box>
         </Box>
-      </Box>
+      </AppointmentProvider>
     </AuthGuard>
   );
 }
