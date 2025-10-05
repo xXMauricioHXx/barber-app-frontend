@@ -59,20 +59,6 @@ jobs:
           ls -la
         shell: bash
 
-      - name: Set Artifact Registry cleanup policy
-        run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BARBER_APP_FRONTEND }}' > ${HOME}/gcp.json
-          export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/gcp.json"
-
-          npx firebase-tools@13.28.0 functions:artifacts:setpolicy \
-            --location us-east1 \
-            --repository gcf-artifacts \
-            --retention 30d \
-            --keep 5 \
-            --delete-untagged \
-            --non-interactive \
-            --project barber-app-frontend
-
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
