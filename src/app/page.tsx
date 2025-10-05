@@ -1,26 +1,37 @@
 "use client";
 
 import { useEffect } from "react";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import app from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
   useEffect(() => {
-    console.log("Firebase App initialized:", app.name);
-  }, []);
+    if (!loading) {
+      if (user) {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
+    }
+  }, [user, loading, router]);
 
   return (
-    <main style={{ padding: "20px" }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Bem-vindo ao Barber App!
+    <Box
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      gap={2}
+    >
+      <CircularProgress size={60} />
+      <Typography variant="h6" color="text.secondary">
+        Redirecionando...
       </Typography>
-      <Button variant="contained" color="primary">
-        Botão de Teste Material UI
-      </Button>
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        Verifique o console do navegador para a inicialização do Firebase.
-      </Typography>
-    </main>
+    </Box>
   );
 }
