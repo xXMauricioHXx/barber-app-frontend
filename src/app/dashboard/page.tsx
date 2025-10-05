@@ -2,9 +2,25 @@
 
 import { Box, Typography, Paper, Card, CardContent } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
+import React, { useEffect } from "react";
+import { barberService } from "@/services/barberService";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [barber, setBarber] = React.useState<{ name: string } | null>(null);
+
+  useEffect(() => {
+    loadBarber();
+  }, []);
+
+  const loadBarber = async () => {
+    try {
+      const barber = await barberService.getBarber(user?.uid || "");
+      setBarber(barber);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <Box>
@@ -13,7 +29,7 @@ export default function DashboardPage() {
       </Typography>
 
       <Typography variant="h6" color="text.secondary" gutterBottom>
-        Bem-vindo, {user?.email}!
+        Bem-vindo, {barber?.name || user?.email}!
       </Typography>
 
       <Box
