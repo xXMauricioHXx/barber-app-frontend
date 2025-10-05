@@ -102,7 +102,7 @@ export default function NewClientPage() {
 
       setTimeout(() => {
         router.push("/dashboard/clients");
-      }, 1000);
+      }, 100);
     } catch (error) {
       setSnackbar({
         open: true,
