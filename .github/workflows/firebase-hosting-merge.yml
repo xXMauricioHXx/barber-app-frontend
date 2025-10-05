@@ -18,51 +18,40 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Detect project directory (where package.json lives)
-        id: detect
+      - name: Provide Firebase public config (for client SDK)
+        # transfere secrets para variáveis de ambiente para o build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          # adicione aqui outras vars públicas que você usa
         run: |
-          # procura o primeiro package.json fora de .github e node_modules
-          PROJECT_JSON=$(find . -maxdepth 3 -type f -name package.json ! -path "./.github/*" ! -path "./node_modules/*" | head -n 1 || true)
-          if [ -z "$PROJECT_JSON" ]; then
-            echo "No package.json found, using repo root"
-            echo "PROJECT_DIR=." >> $GITHUB_ENV
-          else
-            PROJECT_DIR=$(dirname "$PROJECT_JSON")
-            echo "Found package.json in: $PROJECT_DIR"
-            echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          fi
-        shell: bash
+          echo "NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID" >> $GITHUB_ENV
 
-      - name: Install dependencies & Build (in detected project dir)
+      - name: (Optional) Setup Firebase Admin service account
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          echo "Building in $PROJECT_DIR"
-          # instala e builda no diretório detectado
-          cd "$PROJECT_DIR"
+          echo "Escrevendo service account..."
+          echo "$FIREBASE_SERVICE_ACCOUNT" > $GITHUB_WORKSPACE/firebase-service-account.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-service-account.json" >> $GITHUB_ENV
+
+      - name: Install dependencies & Build
+        run: |
           npm ci
           npm run build
-        # usa o working-directory das runs só por clareza; já mudamos com cd
-        shell: bash
+        # se seu projeto estiver em subpasta, coloque: working-directory: ./frontend
 
       - name: Copy build artifacts to repository root (so firebase action can find them)
         run: |
-          echo "PROJECT_DIR is $PROJECT_DIR"
-          # se houver .next (Next.js), copia para a raiz
-          if [ -d "$PROJECT_DIR/.next" ]; then
-            rsync -a "$PROJECT_DIR/.next" ./.next
-          fi
-          # se houver pasta out (next export), copia também
-          if [ -d "$PROJECT_DIR/out" ]; then
-            rsync -a "$PROJECT_DIR/out" ./out
-          fi
-          # copie também public/static se necessário
-          if [ -d "$PROJECT_DIR/public" ]; then
-            rsync -a "$PROJECT_DIR/public" ./public
-          fi
-          # opcional: listar para debugging
-          echo "Root folder after copy:"
-          ls -la
-          [ -d .next ] && echo ".next exists at root (good)" || echo ".next not found at root"
-        shell: bash
+          [ -d .next ] && echo ".next present" || echo ".next missing"
+          # copie caso o build tenha sido feito em subpasta (customize se necessário)
+          # rsync -a ./frontend/.next ./.next
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
