@@ -16,9 +16,13 @@ interface AppointmentContextType {
   stats: AppointmentStats;
   loading: boolean;
   error: string | null;
+  selectedDate: Date;
   loadTodayAppointments: (barberId: string) => Promise<void>;
+  loadAppointmentsByDate: (barberId: string, date: Date) => Promise<void>;
   refreshStats: (barberId: string) => Promise<void>;
   getTodayTotal: () => number;
+  getAppointmentsByStatus: (status: string) => Appointment[];
+  setSelectedDate: (date: Date) => void;
   clearCache: () => void;
 }
 
@@ -32,9 +36,13 @@ const AppointmentContext = createContext<AppointmentContextType>({
   },
   loading: false,
   error: null,
+  selectedDate: new Date(),
   loadTodayAppointments: async () => {},
+  loadAppointmentsByDate: async () => {},
   refreshStats: async () => {},
   getTodayTotal: () => 0,
+  getAppointmentsByStatus: () => [],
+  setSelectedDate: () => {},
   clearCache: () => {},
 });
 
@@ -62,6 +70,7 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const loadTodayAppointments = useCallback(async (barberId: string) => {
     try {
@@ -89,6 +98,42 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
     }
   }, []);
 
+  const loadAppointmentsByDate = useCallback(
+    async (barberId: string, date: Date) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const dateAppointments =
+          await appointmentService.getAppointmentsByBarberAndDate(
+            barberId,
+            date
+          );
+        setAppointments(dateAppointments);
+
+        // Atualizar estatísticas se for data de hoje
+        const today = new Date();
+        const isToday = date.toDateString() === today.toDateString();
+
+        if (isToday) {
+          setStats((prev) => ({
+            ...prev,
+            todayTotal: dateAppointments.length,
+            lastUpdated: new Date(),
+          }));
+        }
+      } catch (err) {
+        console.error("Erro ao carregar agendamentos:", err);
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar agendamentos"
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   const refreshStats = useCallback(async (barberId: string) => {
     try {
       const statsData = await appointmentService.getAppointmentStats(barberId);
@@ -108,6 +153,15 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
     return stats.todayTotal;
   }, [stats.todayTotal]);
 
+  const getAppointmentsByStatus = useCallback(
+    (status: string) => {
+      return appointments.filter(
+        (appointment) => appointment.status === status
+      );
+    },
+    [appointments]
+  );
+
   const clearCache = useCallback(() => {
     setAppointments([]);
     setStats({
@@ -117,6 +171,7 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
       lastUpdated: null,
     });
     setError(null);
+    setSelectedDate(new Date());
   }, []);
 
   const value = {
@@ -124,9 +179,13 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
     stats,
     loading,
     error,
+    selectedDate,
     loadTodayAppointments,
+    loadAppointmentsByDate,
     refreshStats,
     getTodayTotal,
+    getAppointmentsByStatus,
+    setSelectedDate,
     clearCache,
   };
 

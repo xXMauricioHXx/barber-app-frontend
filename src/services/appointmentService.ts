@@ -9,6 +9,14 @@ import {
 import { db } from "@/lib/firebase";
 import { Appointment } from "@/types/appointment";
 import { collectionSchema } from "./collection";
+import {
+  getStartOfDay,
+  getEndOfDay,
+  getStartOfWeek,
+  getEndOfWeek,
+  getStartOfMonth,
+  getEndOfMonth,
+} from "@/lib/dateUtils";
 
 export const appointmentService = {
   async getAppointmentsByBarberAndDate(
@@ -16,12 +24,9 @@ export const appointmentService = {
     date: Date
   ): Promise<Appointment[]> {
     try {
-      // Obter início e fim do dia
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Usar date-fns para obter início e fim do dia
+      const startOfDay = getStartOfDay(date);
+      const endOfDay = getEndOfDay(date);
 
       const q = query(
         collection(
@@ -64,11 +69,9 @@ export const appointmentService = {
     endDate: Date
   ): Promise<Appointment[]> {
     try {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      // Usar date-fns para obter início e fim dos dias
+      const start = getStartOfDay(startDate);
+      const end = getEndOfDay(endDate);
 
       const q = query(
         collection(
@@ -102,28 +105,25 @@ export const appointmentService = {
 
   async getWeekAppointments(barberId: string): Promise<Appointment[]> {
     const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const startOfWeekDate = getStartOfWeek(today);
+    const endOfWeekDate = getEndOfWeek(today);
 
     return this.getAppointmentsByBarberAndDateRange(
       barberId,
-      startOfWeek,
-      endOfWeek
+      startOfWeekDate,
+      endOfWeekDate
     );
   },
 
   async getMonthAppointments(barberId: string): Promise<Appointment[]> {
     const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startOfMonthDate = getStartOfMonth(today);
+    const endOfMonthDate = getEndOfMonth(today);
 
     return this.getAppointmentsByBarberAndDateRange(
       barberId,
-      startOfMonth,
-      endOfMonth
+      startOfMonthDate,
+      endOfMonthDate
     );
   },
 

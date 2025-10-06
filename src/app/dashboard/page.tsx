@@ -57,7 +57,7 @@ export default function DashboardPage() {
               Clientes Ativos
             </Typography>
             <Typography variant="h4" color="success.main">
-              24
+              0
             </Typography>
           </CardContent>
         </Card>
@@ -68,7 +68,7 @@ export default function DashboardPage() {
               Faturamento Mensal
             </Typography>
             <Typography variant="h4" color="warning.main">
-              R$ 2.850
+              R$ 0,00
             </Typography>
           </CardContent>
         </Card>

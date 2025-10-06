@@ -8,6 +8,7 @@ import {
   DateRange as DateRangeIcon,
 } from "@mui/icons-material";
 import { useAppointmentStats } from "@/hooks/useAppointmentStats";
+import { formatTime } from "@/lib/dateUtils";
 
 interface AppointmentStatsCardProps {
   variant?: "today" | "week" | "month";
@@ -73,7 +74,7 @@ export const AppointmentStatsCard: React.FC<AppointmentStatsCardProps> = ({
                 sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
               >
                 <Typography variant="caption" color="text.disabled">
-                  Atualizado: {lastUpdated.toLocaleTimeString("pt-BR")}
+                  Atualizado: {formatTime(lastUpdated)}
                 </Typography>
                 {isStale && (
                   <Chip
