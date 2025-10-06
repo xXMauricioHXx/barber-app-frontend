@@ -15,6 +15,7 @@ import {
 import { db } from "@/lib/firebase";
 import { Client, CreateClientData } from "@/types/client";
 import { collectionSchema } from "./collection";
+import { Appointment } from "@/types/appointment";
 
 export const clientService = {
   async createClient(
@@ -153,11 +154,36 @@ export const clientService = {
     }
   },
 
-  getClientAppointments(clientId: string) {
-    return query(
-      collectionGroup(db, collectionSchema.clients.subCollections.appointments.name),
-      where("clientId", "==", clientId),
-      orderBy("scheduledTime", "desc")
-    );
-  }
+  async getClientAppointments(clientId: string): Promise<Appointment[]> {
+    try {
+      const appointmentsQuery = query(
+        collection(
+          db,
+          collectionSchema.clients.name,
+          clientId,
+          collectionSchema.clients.subCollections.appointments.name
+        ),
+        orderBy("scheduledTime", "desc")
+      );
+      const querySnapshot = await getDocs(appointmentsQuery);
+
+      const appointments = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          scheduledTime: data.scheduledTime?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        };
+      }) as Appointment[];
+
+      return appointments;
+    } catch (err) {
+      console.error("Erro ao carregar agendamentos do cliente:", err);
+      throw new Error(
+        "Erro ao carregar agendamentos do cliente. Tente novamente."
+      );
+    }
+  },
 };

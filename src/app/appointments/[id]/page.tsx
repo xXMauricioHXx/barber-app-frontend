@@ -19,12 +19,23 @@ import {
   Chip,
   Snackbar,
   Stack,
+  Tabs,
+  Tab,
+  Divider,
+  List,
 } from "@mui/material";
+import {
+  Event as EventIcon,
+  AccessTime as TimeIcon,
+  Person as PersonIcon,
+  ContentCut as ServiceIcon,
+} from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { format, isToday, isTomorrow, addDays } from "date-fns";
+import { getDocs } from "firebase/firestore";
 import { Client } from "@/types/client";
 import { Barber } from "@/types/barbers";
 import { Appointment } from "@/types/appointment";
@@ -46,6 +57,7 @@ const generateTimeSlots = () => {
 const TIME_SLOTS = generateTimeSlots();
 
 export default function AppointmentPage() {
+  // Estados para agendamento
   const [client, setClient] = useState<Client | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
@@ -60,10 +72,34 @@ export default function AppointmentPage() {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
 
+  // Estados para visualização de agendamentos
+  const [activeTab, setActiveTab] = useState(0);
+  const [clientAppointments, setClientAppointments] = useState<Appointment[]>(
+    []
+  );
+  const [viewDate, setViewDate] = useState<Date | null>(new Date());
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+
   const router = useRouter();
   const resolvedParams = useParams();
   const ids = resolvedParams?.id as string;
   const [clientId, barberId] = ids ? ids.split("-") : ["", ""];
+
+  // Filtrar agendamentos por data selecionada
+  const filteredAppointments = useMemo(() => {
+    if (!viewDate || !clientAppointments.length) {
+      return [];
+    }
+
+    return clientAppointments.filter((appointment) => {
+      const appointmentDate = appointment.scheduledTime;
+      return (
+        appointmentDate.getDate() === viewDate.getDate() &&
+        appointmentDate.getMonth() === viewDate.getMonth() &&
+        appointmentDate.getFullYear() === viewDate.getFullYear()
+      );
+    });
+  }, [clientAppointments, viewDate]);
 
   const serviceType = useMemo(() => {
     if (!client) return null;
@@ -140,6 +176,28 @@ export default function AppointmentPage() {
     };
 
     loadData();
+  }, [clientId, barberId]);
+
+  // Carregar agendamentos do cliente
+  useEffect(() => {
+    const loadClientAppointments = async () => {
+      if (!clientId) return;
+
+      try {
+        setLoadingAppointments(true);
+        const appointments = await clientService.getClientAppointments(
+          clientId
+        );
+
+        setClientAppointments(appointments);
+      } catch (err) {
+        console.error("Erro ao carregar agendamentos do cliente:", err);
+      } finally {
+        setLoadingAppointments(false);
+      }
+    };
+
+    loadClientAppointments();
   }, [clientId]);
 
   useEffect(() => {
@@ -232,6 +290,27 @@ export default function AppointmentPage() {
     return format(date, "dd/MM/yyyy", { locale: ptBR });
   };
 
+  const getStatusColor = (
+    status: string
+  ): "primary" | "info" | "success" | "error" | "default" => {
+    switch (status) {
+      case "Agendado":
+        return "primary";
+      case "Confirmado":
+        return "info";
+      case "Concluído":
+        return "success";
+      case "Cancelado":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
@@ -263,7 +342,7 @@ export default function AppointmentPage() {
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper sx={{ p: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
-            Agendamento Online
+            Portal do Cliente
           </Typography>
 
           {client && (
@@ -300,111 +379,280 @@ export default function AppointmentPage() {
                 </CardContent>
               </Card>
 
-              <Stack spacing={3}>
-                {/* Seleção de Barbeiro */}
-                <FormControl fullWidth>
-                  <InputLabel id="barber-select-label">
-                    Escolha o Profissional
-                  </InputLabel>
-                  <Select
-                    labelId="barber-select-label"
-                    value={selectedEmployee}
-                    label="Escolha o Profissional"
-                    onChange={(e) => setSelectedEmployee(e.target.value)}
-                  >
-                    {employees.map((barber) => (
-                      <MenuItem key={barber.id} value={barber.id}>
-                        {barber.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                {/* Seleção de Data e Horário */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    flexDirection: { xs: "column", sm: "row" },
-                  }}
+              {/* Tabs para navegar entre Novo Agendamento e Meus Agendamentos */}
+              <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  aria-label="tabs do cliente"
                 >
-                  <DatePicker
-                    label="Escolha a Data"
-                    value={selectedDate}
-                    onChange={(newValue) => {
-                      setSelectedDate(newValue);
-                      setSelectedTime(""); // Reset time when date changes
-                    }}
-                    minDate={new Date()}
-                    maxDate={addDays(new Date(), 30)}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        helperText: selectedDate
-                          ? formatDateLabel(selectedDate)
-                          : "",
-                      },
-                    }}
-                  />
+                  <Tab label="Novo Agendamento" />
+                  <Tab label="Meus Agendamentos" />
+                </Tabs>
+              </Box>
 
-                  <FormControl
-                    fullWidth
-                    disabled={!selectedDate || !selectedEmployee}
-                  >
-                    <InputLabel id="time-select-label">
-                      Escolha o Horário
+              {/* Tab Panel - Novo Agendamento */}
+              {activeTab === 0 && (
+                <Stack spacing={3}>
+                  {/* Seleção de Barbeiro */}
+                  <FormControl fullWidth>
+                    <InputLabel id="barber-select-label">
+                      Escolha o Profissional
                     </InputLabel>
                     <Select
-                      labelId="time-select-label"
-                      value={selectedTime}
-                      label="Escolha o Horário"
-                      onChange={(e) => setSelectedTime(e.target.value)}
+                      labelId="barber-select-label"
+                      value={selectedEmployee}
+                      label="Escolha o Profissional"
+                      onChange={(e) => setSelectedEmployee(e.target.value)}
                     >
-                      {availableTimeSlots.map((time) => (
-                        <MenuItem key={time} value={time}>
-                          {time}
+                      {employees.map((barber) => (
+                        <MenuItem key={barber.id} value={barber.id}>
+                          {barber.name}
                         </MenuItem>
                       ))}
                     </Select>
-                    {selectedDate &&
-                      selectedEmployee &&
-                      availableTimeSlots.length === 0 && (
-                        <Typography
-                          variant="caption"
-                          color="error"
-                          sx={{ mt: 1, display: "block" }}
-                        >
-                          Não há horários disponíveis para esta data
-                        </Typography>
-                      )}
                   </FormControl>
-                </Box>
 
-                {/* Botão de Confirmação */}
-                <Button
-                  variant="contained"
-                  size="large"
-                  fullWidth
-                  onClick={handleSubmit}
-                  disabled={
-                    submitting ||
-                    !selectedEmployee ||
-                    !selectedDate ||
-                    !selectedTime ||
-                    availableTimeSlots.length === 0
-                  }
-                  sx={{ mt: 2 }}
-                >
-                  {submitting ? (
-                    <>
-                      <CircularProgress size={20} sx={{ mr: 1 }} />
-                      Agendando...
-                    </>
+                  {/* Seleção de Data e Horário */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 2,
+                      flexDirection: { xs: "column", sm: "row" },
+                    }}
+                  >
+                    <DatePicker
+                      label="Escolha a Data"
+                      value={selectedDate}
+                      onChange={(newValue) => {
+                        setSelectedDate(newValue);
+                        setSelectedTime(""); // Reset time when date changes
+                      }}
+                      minDate={new Date()}
+                      maxDate={addDays(new Date(), 30)}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          helperText: selectedDate
+                            ? formatDateLabel(selectedDate)
+                            : "",
+                        },
+                      }}
+                    />
+
+                    <FormControl
+                      fullWidth
+                      disabled={!selectedDate || !selectedEmployee}
+                    >
+                      <InputLabel id="time-select-label">
+                        Escolha o Horário
+                      </InputLabel>
+                      <Select
+                        labelId="time-select-label"
+                        value={selectedTime}
+                        label="Escolha o Horário"
+                        onChange={(e) => setSelectedTime(e.target.value)}
+                      >
+                        {availableTimeSlots.map((time) => (
+                          <MenuItem key={time} value={time}>
+                            {time}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {selectedDate &&
+                        selectedEmployee &&
+                        availableTimeSlots.length === 0 && (
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            sx={{ mt: 1, display: "block" }}
+                          >
+                            Não há horários disponíveis para esta data
+                          </Typography>
+                        )}
+                    </FormControl>
+                  </Box>
+
+                  {/* Botão de Confirmação */}
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    onClick={handleSubmit}
+                    disabled={
+                      submitting ||
+                      !selectedEmployee ||
+                      !selectedDate ||
+                      !selectedTime ||
+                      availableTimeSlots.length === 0
+                    }
+                    sx={{ mt: 2 }}
+                  >
+                    {submitting ? (
+                      <>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Agendando...
+                      </>
+                    ) : (
+                      "Confirmar Agendamento"
+                    )}
+                  </Button>
+                </Stack>
+              )}
+
+              {/* Tab Panel - Meus Agendamentos */}
+              {activeTab === 1 && (
+                <Stack spacing={3}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      mb: 2,
+                    }}
+                  >
+                    <DatePicker
+                      label="Filtrar por Data"
+                      value={viewDate}
+                      onChange={(newValue) => setViewDate(newValue)}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: { minWidth: 200 },
+                        },
+                      }}
+                    />
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setViewDate(new Date())}
+                    >
+                      Hoje
+                    </Button>
+                  </Box>
+
+                  {loadingAppointments ? (
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", py: 4 }}
+                    >
+                      <CircularProgress />
+                    </Box>
+                  ) : filteredAppointments.length === 0 ? (
+                    <Paper sx={{ p: 3, textAlign: "center" }}>
+                      <Typography
+                        variant="h6"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        <EventIcon
+                          sx={{
+                            fontSize: 48,
+                            mb: 1,
+                            display: "block",
+                            mx: "auto",
+                          }}
+                        />
+                        Nenhum agendamento encontrado
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {viewDate
+                          ? `Não há agendamentos para ${formatDateLabel(
+                              viewDate
+                            )}`
+                          : "Você ainda não possui agendamentos."}
+                      </Typography>
+                    </Paper>
                   ) : (
-                    "Confirmar Agendamento"
+                    <List>
+                      {filteredAppointments.map((appointment) => (
+                        <Card key={appointment.id} sx={{ mb: 2 }}>
+                          <CardContent>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                mb: 2,
+                              }}
+                            >
+                              <Typography variant="h6" component="div">
+                                <TimeIcon
+                                  sx={{ mr: 1, verticalAlign: "middle" }}
+                                />
+                                {format(appointment.scheduledTime, "HH:mm", {
+                                  locale: ptBR,
+                                })}
+                              </Typography>
+                              <Chip
+                                label={appointment.status}
+                                color={getStatusColor(appointment.status)}
+                                size="small"
+                              />
+                            </Box>
+
+                            <Divider sx={{ my: 1 }} />
+
+                            <Stack spacing={1}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <ServiceIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                                <Typography variant="body2">
+                                  <strong>Serviço:</strong>{" "}
+                                  {appointment.serviceType}
+                                </Typography>
+                              </Box>
+
+                              {appointment.selectedBarber && (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <PersonIcon
+                                    sx={{
+                                      fontSize: 16,
+                                      color: "text.secondary",
+                                    }}
+                                  />
+                                  <Typography variant="body2">
+                                    <strong>Profissional:</strong>{" "}
+                                    {appointment.selectedBarber.name}
+                                  </Typography>
+                                </Box>
+                              )}
+
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <EventIcon
+                                  sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                                <Typography variant="body2">
+                                  <strong>Data:</strong>{" "}
+                                  {formatDateLabel(appointment.scheduledTime)}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </List>
                   )}
-                </Button>
-              </Stack>
+                </Stack>
+              )}
             </Box>
           )}
         </Paper>
