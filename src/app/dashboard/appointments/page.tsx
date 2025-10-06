@@ -19,6 +19,7 @@ import {
   Person as PersonIcon,
   Phone as PhoneIcon,
   AccessTime as AccessTimeIcon,
+  Work as WorkIcon,
 } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import { useAppointments } from "@/context/AppointmentContext";
@@ -313,6 +314,21 @@ export default function AppointmentsPage() {
                             <PhoneIcon sx={{ fontSize: 16 }} />
                             <Typography variant="body2" color="text.secondary">
                               {appointment.clientPhone}
+                            </Typography>
+                          </Box>
+                        )}
+                        {appointment?.selectedBarber?.name && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mt: 1,
+                            }}
+                          >
+                            <WorkIcon sx={{ fontSize: 16 }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {appointment?.selectedBarber?.name}
                             </Typography>
                           </Box>
                         )}

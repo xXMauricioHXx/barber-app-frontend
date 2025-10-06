@@ -8,6 +8,17 @@ export const collectionSchema = {
       appointments: {
         name: "appointments",
       },
+      employees: {
+        name: "employees",
+      },
+    },
+  },
+  clients: {
+    name: "clients",
+    subCollections: {
+      appointments: {
+        name: "appointments",
+      },
     },
   },
 };

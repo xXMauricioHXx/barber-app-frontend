@@ -8,10 +8,14 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
+  collectionGroup,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Client, CreateClientData } from "@/types/client";
 import { collectionSchema } from "./collection";
+import { Appointment } from "@/types/appointment";
 
 export const clientService = {
   async createClient(
@@ -34,6 +38,17 @@ export const clientService = {
         ),
         clientData
       );
+
+      const clientRef = doc(
+        collection(db, collectionSchema.clients.name),
+        docRef.id
+      );
+
+      await setDoc(clientRef, {
+        ...clientData,
+        id: docRef.id,
+      });
+
       return docRef.id;
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
@@ -122,17 +137,53 @@ export const clientService = {
 
   async deleteClient(barberId: string, id: string): Promise<void> {
     try {
-      const clientRef = doc(
+      const barberClientRef = doc(
         db,
         collectionSchema.barbers.name,
         barberId,
         collectionSchema.barbers.subCollections.clients.name,
         id
       );
-      await deleteDoc(clientRef);
+
+      const clientRef = doc(db, collectionSchema.clients.name, id);
+
+      await Promise.all([deleteDoc(clientRef), deleteDoc(barberClientRef)]);
     } catch (error) {
       console.error("Erro ao deletar cliente:", error);
       throw new Error("Erro ao deletar cliente. Tente novamente.");
+    }
+  },
+
+  async getClientAppointments(clientId: string): Promise<Appointment[]> {
+    try {
+      const appointmentsQuery = query(
+        collection(
+          db,
+          collectionSchema.clients.name,
+          clientId,
+          collectionSchema.clients.subCollections.appointments.name
+        ),
+        orderBy("scheduledTime", "desc")
+      );
+      const querySnapshot = await getDocs(appointmentsQuery);
+
+      const appointments = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          scheduledTime: data.scheduledTime?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        };
+      }) as Appointment[];
+
+      return appointments;
+    } catch (err) {
+      console.error("Erro ao carregar agendamentos do cliente:", err);
+      throw new Error(
+        "Erro ao carregar agendamentos do cliente. Tente novamente."
+      );
     }
   },
 };
