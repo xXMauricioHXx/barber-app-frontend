@@ -4,11 +4,13 @@ export interface Appointment {
   clientPhone?: string;
   scheduledTime: Date;
   serviceType: "Cabelo" | "Cabelo e Barba";
-  clientPlan: "Básico" | "Premium" | "VIP";
+  clientPlan: "Básico" | "Premium" | "VIP" | "Gold" | "Platinum";
   status: "Agendado" | "Confirmado" | "Concluído" | "Cancelado";
   barberId: string;
+  clientId?: string;
   createdAt: Date;
   updatedAt: Date;
+  selectedBarber?: string;
 }
 
 export interface CreateAppointmentData {
@@ -16,6 +18,8 @@ export interface CreateAppointmentData {
   clientPhone?: string;
   scheduledTime: Date;
   serviceType: "Cabelo" | "Cabelo e Barba";
-  clientPlan?: "Básico" | "Premium" | "VIP";
+  clientPlan?: "Básico" | "Premium" | "VIP" | "Gold" | "Platinum";
   status: "Agendado" | "Confirmado" | "Concluído" | "Cancelado";
+  clientId?: string;
+  selectedBarber?: string;
 }

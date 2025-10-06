@@ -1,13 +1,14 @@
 import {
   collection,
   getDocs,
+  addDoc,
   query,
   where,
   orderBy,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Appointment } from "@/types/appointment";
+import { Appointment, CreateAppointmentData } from "@/types/appointment";
 import { collectionSchema } from "./collection";
 import {
   getStartOfDay,
@@ -19,6 +20,33 @@ import {
 } from "@/lib/dateUtils";
 
 export const appointmentService = {
+  async createAppointment(
+    barberId: string,
+    data: CreateAppointmentData
+  ): Promise<string> {
+    try {
+      const appointmentData = {
+        ...data,
+        barberId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const docRef = await addDoc(
+        collection(
+          db,
+          collectionSchema.barbers.name,
+          barberId,
+          collectionSchema.barbers.subCollections.appointments.name
+        ),
+        appointmentData
+      );
+      return docRef.id;
+    } catch (error) {
+      console.error("Erro ao criar agendamento:", error);
+      throw new Error("Erro ao criar agendamento. Tente novamente.");
+    }
+  },
   async getAppointmentsByBarberAndDate(
     barberId: string,
     date: Date

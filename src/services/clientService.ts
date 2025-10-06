@@ -8,6 +8,8 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
+  collectionGroup,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Client, CreateClientData } from "@/types/client";

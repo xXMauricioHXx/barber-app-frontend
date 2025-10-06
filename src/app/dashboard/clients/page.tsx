@@ -122,7 +122,7 @@ export default function ClientsPage() {
   const handleGenerateLink = () => {
     if (selectedClient && selectedClient.id) {
       const baseUrl = window.location.origin;
-      const link = `${baseUrl}/appointments/${selectedClient.id}`;
+      const link = `${baseUrl}/appointments/${selectedClient.id}-${user?.uid}`;
       setGeneratedLink(link);
       setLinkDialogOpen(true);
     }

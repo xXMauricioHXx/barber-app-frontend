@@ -8,6 +8,9 @@ export const collectionSchema = {
       appointments: {
         name: "appointments",
       },
+      employees: {
+        name: "employees",
+      },
     },
   },
 };
