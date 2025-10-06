@@ -10,6 +10,7 @@ import {
   orderBy,
   where,
   collectionGroup,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Client, CreateClientData } from "@/types/client";
@@ -36,6 +37,17 @@ export const clientService = {
         ),
         clientData
       );
+
+      const clientRef = doc(
+        collection(db, collectionSchema.clients.name),
+        docRef.id
+      );
+
+      await setDoc(clientRef, {
+        ...clientData,
+        id: docRef.id,
+      });
+
       return docRef.id;
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
@@ -124,17 +136,28 @@ export const clientService = {
 
   async deleteClient(barberId: string, id: string): Promise<void> {
     try {
-      const clientRef = doc(
+      const barberClientRef = doc(
         db,
         collectionSchema.barbers.name,
         barberId,
         collectionSchema.barbers.subCollections.clients.name,
         id
       );
-      await deleteDoc(clientRef);
+
+      const clientRef = doc(db, collectionSchema.clients.name, id);
+
+      await Promise.all([deleteDoc(clientRef), deleteDoc(barberClientRef)]);
     } catch (error) {
       console.error("Erro ao deletar cliente:", error);
       throw new Error("Erro ao deletar cliente. Tente novamente.");
     }
   },
+
+  getClientAppointments(clientId: string) {
+    return query(
+      collectionGroup(db, collectionSchema.clients.subCollections.appointments.name),
+      where("clientId", "==", clientId),
+      orderBy("scheduledTime", "desc")
+    );
+  }
 };

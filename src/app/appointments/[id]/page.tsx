@@ -47,10 +47,11 @@ const TIME_SLOTS = generateTimeSlots();
 
 export default function AppointmentPage() {
   const [client, setClient] = useState<Client | null>(null);
-  const [employee, setEmployees] = useState<Employee[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState<string>("");
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [barber, setBarber] = useState<Barber | null>(null);
   const [existingAppointments, setExistingAppointments] = useState<
     Appointment[]
   >([]);
@@ -78,7 +79,7 @@ export default function AppointmentPage() {
   }, [client]);
 
   const availableTimeSlots = useMemo(() => {
-    if (!selectedDate || !selectedBarber || !existingAppointments) {
+    if (!selectedDate || !selectedEmployee || !existingAppointments) {
       return TIME_SLOTS;
     }
 
@@ -96,7 +97,7 @@ export default function AppointmentPage() {
     );
 
     return TIME_SLOTS.filter((slot) => !busyTimes.includes(slot));
-  }, [selectedDate, selectedBarber, existingAppointments]);
+  }, [selectedDate, selectedEmployee, existingAppointments]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -106,21 +107,30 @@ export default function AppointmentPage() {
         return;
       }
 
+      if (!barberId) {
+        setError("ID do estabelecimento não fornecido");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        // Buscar cliente
-        const client = await clientService.getClientById(barberId, clientId);
+        const [client, employeesData, barberData] = await Promise.all([
+          clientService.getClientById(barberId, clientId),
+          employeeService.getEmployees(barberId),
+          barberService.getBarber(barberId),
+        ]);
+
         if (!client) {
           setError("Cliente não encontrado");
           setLoading(false);
           return;
         }
 
+        setBarber(barberData);
         setClient(client);
-
-        const employeesData = await employeeService.getEmployees(barberId);
         setEmployees(employeesData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar dados");
@@ -132,10 +142,9 @@ export default function AppointmentPage() {
     loadData();
   }, [clientId]);
 
-  // Carregar agendamentos quando barbeiro e data são selecionados
   useEffect(() => {
     const loadAppointments = async () => {
-      if (!selectedBarber || !selectedDate) {
+      if (!selectedEmployee || !selectedDate) {
         setExistingAppointments([]);
         return;
       }
@@ -143,7 +152,7 @@ export default function AppointmentPage() {
       try {
         const appointments =
           await appointmentService.getAppointmentsByBarberAndDate(
-            selectedBarber,
+            selectedEmployee,
             selectedDate
           );
         setExistingAppointments(appointments);
@@ -154,12 +163,12 @@ export default function AppointmentPage() {
     };
 
     loadAppointments();
-  }, [selectedBarber, selectedDate]);
+  }, [selectedEmployee, selectedDate]);
 
   const handleSubmit = async () => {
     if (
       !client ||
-      !selectedBarber ||
+      !selectedEmployee ||
       !selectedDate ||
       !selectedTime ||
       !serviceType
@@ -177,21 +186,29 @@ export default function AppointmentPage() {
       const scheduledDateTime = new Date(selectedDate);
       scheduledDateTime.setHours(hours, minutes, 0, 0);
 
+      const selectedEmp = employees.find((emp) => emp.id === selectedEmployee);
+
+      if (!selectedEmp) {
+        setError("Profissional selecionado não encontrado");
+        setSubmitting(false);
+        return;
+      }
+
       await appointmentService.createAppointment(barberId, {
         clientName: client.name,
         clientPhone: client.phone,
         scheduledTime: scheduledDateTime,
-        selectedBarber,
+        selectedBarber: selectedEmp,
         serviceType,
         clientPlan: client.plan,
         status: "Agendado",
-        clientId: client.id,
+        clientId: client.id || "",
       });
 
       setSuccess("Agendamento realizado com sucesso!");
 
       // Limpar formulário
-      setSelectedBarber("");
+      setSelectedEmployee("");
       setSelectedDate(null);
       setSelectedTime("");
       setExistingAppointments([]);
@@ -273,6 +290,13 @@ export default function AppointmentPage() {
                   >
                     Serviço disponível: <strong>{serviceType}</strong>
                   </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Estabelecimento: <strong>{barber?.name || "N/A"}</strong>
+                  </Typography>
                 </CardContent>
               </Card>
 
@@ -284,11 +308,11 @@ export default function AppointmentPage() {
                   </InputLabel>
                   <Select
                     labelId="barber-select-label"
-                    value={selectedBarber}
+                    value={selectedEmployee}
                     label="Escolha o Profissional"
-                    onChange={(e) => setSelectedBarber(e.target.value)}
+                    onChange={(e) => setSelectedEmployee(e.target.value)}
                   >
-                    {employee.map((barber) => (
+                    {employees.map((barber) => (
                       <MenuItem key={barber.id} value={barber.id}>
                         {barber.name}
                       </MenuItem>
@@ -325,7 +349,7 @@ export default function AppointmentPage() {
 
                   <FormControl
                     fullWidth
-                    disabled={!selectedDate || !selectedBarber}
+                    disabled={!selectedDate || !selectedEmployee}
                   >
                     <InputLabel id="time-select-label">
                       Escolha o Horário
@@ -343,7 +367,7 @@ export default function AppointmentPage() {
                       ))}
                     </Select>
                     {selectedDate &&
-                      selectedBarber &&
+                      selectedEmployee &&
                       availableTimeSlots.length === 0 && (
                         <Typography
                           variant="caption"
@@ -364,7 +388,7 @@ export default function AppointmentPage() {
                   onClick={handleSubmit}
                   disabled={
                     submitting ||
-                    !selectedBarber ||
+                    !selectedEmployee ||
                     !selectedDate ||
                     !selectedTime ||
                     availableTimeSlots.length === 0

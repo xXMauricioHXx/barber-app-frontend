@@ -1,3 +1,5 @@
+import { Employee } from "./employee";
+
 export interface Appointment {
   id?: string;
   clientName: string;
@@ -10,7 +12,7 @@ export interface Appointment {
   clientId?: string;
   createdAt: Date;
   updatedAt: Date;
-  selectedBarber?: string;
+  selectedBarber?: Employee;
 }
 
 export interface CreateAppointmentData {
@@ -20,6 +22,6 @@ export interface CreateAppointmentData {
   serviceType: "Cabelo" | "Cabelo e Barba";
   clientPlan?: "Básico" | "Premium" | "VIP" | "Gold" | "Platinum";
   status: "Agendado" | "Confirmado" | "Concluído" | "Cancelado";
-  clientId?: string;
-  selectedBarber?: string;
+  clientId: string;
+  selectedBarber?: Employee;
 }

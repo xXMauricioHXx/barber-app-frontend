@@ -13,4 +13,12 @@ export const collectionSchema = {
       },
     },
   },
+  clients: {
+    name: "clients",
+    subCollections: {
+      appointments: {
+        name: "appointments",
+      },
+    },
+  },
 };

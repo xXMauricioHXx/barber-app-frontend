@@ -41,6 +41,20 @@ export const appointmentService = {
         ),
         appointmentData
       );
+
+      await addDoc(
+        collection(
+          db,
+          collectionSchema.clients.name,
+          data.clientId,
+          collectionSchema.clients.subCollections.appointments.name
+        ),
+        {
+          ...appointmentData,
+          id: docRef.id,
+        }
+      );
+
       return docRef.id;
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);

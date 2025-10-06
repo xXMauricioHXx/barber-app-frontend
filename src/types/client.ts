@@ -1,3 +1,5 @@
+import { Appointment } from "./appointment";
+
 export interface Client {
   id?: string;
   name: string;
@@ -6,6 +8,7 @@ export interface Client {
   paymentStatus: "Pago" | "Em Atraso";
   createdAt: Date;
   updatedAt: Date;
+  appointments?: Appointment[];
 }
 
 export interface CreateClientData {

@@ -6,7 +6,6 @@ import { Employee } from "@/types/employee";
 export const employeeService = {
   async getEmployees(barberId: string): Promise<Employee[]> {
     try {
-      console.log("Fetching employees for barberId:", barberId);
       const q = query(
         collection(
           db,
