@@ -1,13 +1,12 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Barber } from "@/types/barbers";
-
-const COLLECTION_NAME = "barbers";
+import { collectionSchema } from "./collection";
 
 export const barberService = {
   async getBarber(barberId: string): Promise<Barber | null> {
     try {
-      const docRef = doc(db, COLLECTION_NAME, barberId);
+      const docRef = doc(db, collectionSchema.barbers.name, barberId);
       const docSnap = await getDoc(docRef);
 
       return docSnap.data() as Barber | null;
