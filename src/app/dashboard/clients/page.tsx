@@ -25,6 +25,12 @@ import {
   Avatar,
   useTheme,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Snackbar,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -32,6 +38,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Phone as PhoneIcon,
+  Link as LinkIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { Client } from "@/types/client";
@@ -47,6 +54,10 @@ export default function ClientsPage() {
   const [error, setError] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   const { user } = useAuth();
 
   const loadClients = useCallback(async () => {
@@ -106,6 +117,37 @@ export default function ClientsPage() {
       }
     }
     handleMenuClose();
+  };
+
+  const handleGenerateLink = () => {
+    if (selectedClient && selectedClient.id) {
+      const baseUrl = window.location.origin;
+      const link = `${baseUrl}/appointments/${selectedClient.id}`;
+      setGeneratedLink(link);
+      setLinkDialogOpen(true);
+    }
+    handleMenuClose();
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedLink);
+      setSnackbarMessage("Link copiado para a área de transferência!");
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage("Erro ao copiar link");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleCloseLinkDialog = () => {
+    setLinkDialogOpen(false);
+    setGeneratedLink("");
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+    setSnackbarMessage("");
   };
 
   const formatDate = (date: Date) => {
@@ -315,6 +357,12 @@ export default function ClientsPage() {
           horizontal: "right",
         }}
       >
+        <MenuItem onClick={handleGenerateLink}>
+          <ListItemIcon>
+            <LinkIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Gerar Link de Agendamento</ListItemText>
+        </MenuItem>
         <MenuItem onClick={handleEditClient}>
           <ListItemIcon>
             <EditIcon fontSize="small" />
@@ -328,6 +376,47 @@ export default function ClientsPage() {
           <ListItemText>Excluir</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Dialog para exibir link de agendamento */}
+      <Dialog
+        open={linkDialogOpen}
+        onClose={handleCloseLinkDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Link de Agendamento Gerado</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Compartilhe este link com o cliente{" "}
+            <strong>{selectedClient?.name}</strong> para que ele possa fazer o
+            agendamento:
+          </Typography>
+          <TextField
+            fullWidth
+            value={generatedLink}
+            InputProps={{
+              readOnly: true,
+            }}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+            sx={{ mb: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseLinkDialog}>Fechar</Button>
+          <Button variant="contained" onClick={handleCopyLink}>
+            Copiar Link
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar para feedback */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Box>
   );
 }
