@@ -44,6 +44,8 @@ import { useRouter } from "next/navigation";
 import { Client } from "@/types/client";
 import { clientService } from "@/services/clientService";
 import { useAuth } from "@/context/AuthContext";
+import { Breadcrumbs } from "@/components";
+import usePlans, { PaymentStatus } from "@/hooks/usePlans";
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -59,6 +61,7 @@ export default function ClientsPage() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const { user } = useAuth();
+  const { getPlanStyle, getPaymentStatusColor } = usePlans();
 
   const loadClients = useCallback(async () => {
     try {
@@ -134,7 +137,7 @@ export default function ClientsPage() {
       await navigator.clipboard.writeText(generatedLink);
       setSnackbarMessage("Link copiado para a área de transferência!");
       setSnackbarOpen(true);
-    } catch (err) {
+    } catch {
       setSnackbarMessage("Erro ao copiar link");
       setSnackbarOpen(true);
     }
@@ -156,23 +159,6 @@ export default function ClientsPage() {
       month: "2-digit",
       year: "numeric",
     }).format(date);
-  };
-
-  const getPaymentStatusColor = (status: string): "success" | "error" => {
-    return status === "Pago" ? "success" : "error";
-  };
-
-  const getPlanColor = (plan: string): "default" | "primary" | "secondary" => {
-    switch (plan) {
-      case "Básico":
-        return "default";
-      case "Premium":
-        return "primary";
-      case "VIP":
-        return "secondary";
-      default:
-        return "default";
-    }
   };
 
   const renderMobileClientCard = (client: Client) => (
@@ -212,12 +198,16 @@ export default function ClientsPage() {
         <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
           <Chip
             label={client.plan}
-            color={getPlanColor(client.plan)}
+            sx={getPlanStyle(client.plan)}
             size="small"
           />
           <Chip
             label={client.paymentStatus}
-            color={getPaymentStatusColor(client.paymentStatus)}
+            sx={{
+              backgroundColor: getPaymentStatusColor(
+                client.paymentStatus as PaymentStatus
+              ),
+            }}
             size="small"
           />
         </Box>
@@ -231,6 +221,8 @@ export default function ClientsPage() {
 
   return (
     <Box>
+      <Breadcrumbs />
+
       <Box
         sx={{
           display: "flex",
@@ -241,9 +233,6 @@ export default function ClientsPage() {
           gap: isMobile ? 2 : 0,
         }}
       >
-        <Typography variant={isMobile ? "h5" : "h4"} component="h1">
-          Clientes
-        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -313,14 +302,16 @@ export default function ClientsPage() {
                   <TableCell>
                     <Chip
                       label={client.plan}
-                      color={getPlanColor(client.plan)}
+                      sx={getPlanStyle(client.plan)}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
                       label={client.paymentStatus}
-                      color={getPaymentStatusColor(client.paymentStatus)}
+                      color={getPaymentStatusColor(
+                        client.paymentStatus as PaymentStatus
+                      )}
                       size="small"
                     />
                   </TableCell>

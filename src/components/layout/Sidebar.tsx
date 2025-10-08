@@ -14,6 +14,7 @@ import {
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
+  Group as GroupIcon,
   Schedule as ScheduleIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
@@ -39,6 +40,11 @@ const menuItems = [
     text: "Clientes",
     icon: <PeopleIcon />,
     href: "/dashboard/clients",
+  },
+  {
+    text: "Funcionários",
+    icon: <GroupIcon />,
+    href: "/dashboard/employees",
   },
   {
     text: "Agenda",

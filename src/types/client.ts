@@ -1,11 +1,12 @@
+import { PlanNames } from "@/hooks/usePlans";
 import { Appointment } from "./appointment";
 
 export interface Client {
   id?: string;
   name: string;
   phone: string;
-  plan: "Básico" | "Premium" | "VIP" | "Gold" | "Platinum";
-  paymentStatus: "Pago" | "Em Atraso";
+  plan: PlanNames;
+  paymentStatus: string;
   createdAt: Date;
   updatedAt: Date;
   appointments?: Appointment[];
@@ -14,6 +15,6 @@ export interface Client {
 export interface CreateClientData {
   name: string;
   phone: string;
-  plan: "Básico" | "Premium" | "VIP" | "Gold" | "Platinum";
-  paymentStatus: "Pago" | "Em Atraso";
+  plan: PlanNames;
+  paymentStatus: string;
 }

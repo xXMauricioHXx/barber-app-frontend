@@ -44,6 +44,8 @@ import { barberService } from "@/services/barberService";
 import { appointmentService } from "@/services/appointmentService";
 import { employeeService } from "@/services/employeesService";
 import { Employee } from "@/types/employee";
+import usePlans, { PlanNames } from "@/hooks/usePlans";
+import { ServiceType } from "@/types/serviceType";
 
 const generateTimeSlots = () => {
   const slots = [];
@@ -71,6 +73,7 @@ export default function AppointmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
+  const { getPlanStyle } = usePlans();
 
   // Estados para visualização de agendamentos
   const [activeTab, setActiveTab] = useState(0);
@@ -105,12 +108,14 @@ export default function AppointmentPage() {
     if (!client) return null;
 
     switch (client.plan) {
-      case "Gold":
-        return "Cabelo";
-      case "Platinum":
-        return "Cabelo e Barba";
+      case PlanNames.BASIC:
+        return ServiceType.HAIR;
+      case PlanNames.PREMIUM:
+        return ServiceType.HAIR_AND_BEARD;
+      case PlanNames.PREMIUM_PLUS:
+        return ServiceType.HAIR_BEARD_AND_EYEBROWS;
       default:
-        return "Cabelo";
+        return ServiceType.HAIR;
     }
   }, [client]);
 
@@ -358,7 +363,7 @@ export default function AppointmentPage() {
                     </Typography>
                     <Chip
                       label={client.plan}
-                      color={client.plan === "Platinum" ? "primary" : "default"}
+                      sx={getPlanStyle(client.plan)}
                       size="small"
                     />
                   </Box>

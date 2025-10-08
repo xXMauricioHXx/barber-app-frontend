@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Box,
-  Typography,
   TextField,
   Button,
   FormControl,
@@ -18,19 +17,19 @@ import {
   CircularProgress,
   Skeleton,
 } from "@mui/material";
-import {
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon,
-} from "@mui/icons-material";
+import { Save as SaveIcon } from "@mui/icons-material";
 import { CreateClientData, Client } from "@/types/client";
 import { clientService } from "@/services/clientService";
 import { useAuth } from "@/context/AuthContext";
-import { Custom404 } from "@/components";
+import { Custom404, Breadcrumbs } from "@/components";
+import usePlans from "@/hooks/usePlans";
 
 export default function EditClientPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
+  const { plans, paymentStatuses, defaultPlan, defaultPlanStatus } = usePlans();
+
   const clientId = params.id as string;
 
   const [client, setClient] = useState<Client | null>(null);
@@ -46,8 +45,8 @@ export default function EditClientPage() {
   const [formData, setFormData] = useState<CreateClientData>({
     name: "",
     phone: "",
-    plan: "Básico",
-    paymentStatus: "Pago",
+    plan: defaultPlan.name,
+    paymentStatus: defaultPlanStatus,
   });
 
   const [errors, setErrors] = useState({
@@ -83,9 +82,7 @@ export default function EditClientPage() {
             error instanceof Error ? error.message : "Erro ao carregar cliente",
           severity: "error",
         });
-        setTimeout(() => {
-          router.push("/dashboard/clients");
-        }, 2000);
+        router.push("/dashboard/clients");
       } finally {
         setLoading(false);
       }
@@ -183,30 +180,13 @@ export default function EditClientPage() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
-
   return (
     <Box>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={handleCancel}
-          sx={{ mr: 2 }}
-        >
-          Voltar
-        </Button>
-        <Typography variant="h4" component="h1">
-          {loading ? "Carregando..." : `Editar Cliente: ${client?.name || ""}`}
-        </Typography>
-      </Box>
+      <Breadcrumbs
+        title={
+          loading ? "Carregando..." : `Editar Cliente: ${client?.name || ""}`
+        }
+      />
 
       <Card sx={{ maxWidth: 600 }}>
         <CardContent sx={{ p: 4 }}>
@@ -262,9 +242,11 @@ export default function EditClientPage() {
                           handleInputChange("plan", e.target.value)
                         }
                       >
-                        <MenuItem value="Básico">Básico</MenuItem>
-                        <MenuItem value="Premium">Premium</MenuItem>
-                        <MenuItem value="VIP">VIP</MenuItem>
+                        {plans.map((plan) => (
+                          <MenuItem key={plan.name} value={plan.name}>
+                            {plan.name}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
 
@@ -277,8 +259,11 @@ export default function EditClientPage() {
                           handleInputChange("paymentStatus", e.target.value)
                         }
                       >
-                        <MenuItem value="Pago">Pago</MenuItem>
-                        <MenuItem value="Em Atraso">Em Atraso</MenuItem>
+                        {paymentStatuses.map((status) => (
+                          <MenuItem key={status} value={status}>
+                            {status}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
                   </Box>
