@@ -3,7 +3,7 @@
 import { Box, Typography, Card, CardContent } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
 import { useAppointments } from "@/context/AppointmentContext";
-import { AppointmentStatsCard } from "@/components";
+import { AppointmentStatsCard, Breadcrumbs } from "@/components";
 import React, { useEffect } from "react";
 import { barberService } from "@/services/barberService";
 
@@ -30,9 +30,7 @@ export default function DashboardPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
+      <Breadcrumbs />
 
       <Typography variant="h6" color="text.secondary" gutterBottom>
         Bem-vindo, {barber?.name || user?.email}!

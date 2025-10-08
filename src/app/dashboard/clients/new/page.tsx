@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
-  Typography,
   TextField,
   Button,
   FormControl,
@@ -17,17 +16,17 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import {
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon,
-} from "@mui/icons-material";
+import { Save as SaveIcon } from "@mui/icons-material";
 import { CreateClientData } from "@/types/client";
 import { clientService } from "@/services/clientService";
 import { useAuth } from "@/context/AuthContext";
+import { Breadcrumbs } from "@/components";
+import usePlans from "@/hooks/usePlans";
 
 export default function NewClientPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { plans, paymentStatuses, defaultPlan, defaultPlanStatus } = usePlans();
 
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -39,8 +38,8 @@ export default function NewClientPage() {
   const [formData, setFormData] = useState<CreateClientData>({
     name: "",
     phone: "",
-    plan: "Básico",
-    paymentStatus: "Pago",
+    plan: defaultPlan.name,
+    paymentStatus: defaultPlanStatus,
   });
 
   const [errors, setErrors] = useState({
@@ -125,18 +124,7 @@ export default function NewClientPage() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={handleCancel}
-          sx={{ mr: 2 }}
-        >
-          Voltar
-        </Button>
-        <Typography variant="h4" component="h1">
-          Cadastrar Novo Cliente
-        </Typography>
-      </Box>
+      <Breadcrumbs title="Cadastrar Novo Cliente" />
 
       <Card sx={{ maxWidth: 600 }}>
         <CardContent sx={{ p: 4 }}>
@@ -179,9 +167,11 @@ export default function NewClientPage() {
                     label="Plano"
                     onChange={(e) => handleInputChange("plan", e.target.value)}
                   >
-                    <MenuItem value="Básico">Básico</MenuItem>
-                    <MenuItem value="Premium">Premium</MenuItem>
-                    <MenuItem value="VIP">VIP</MenuItem>
+                    {plans.map((plan) => (
+                      <MenuItem key={plan.name} value={plan.name}>
+                        {plan.name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
 
@@ -194,8 +184,11 @@ export default function NewClientPage() {
                       handleInputChange("paymentStatus", e.target.value)
                     }
                   >
-                    <MenuItem value="Pago">Pago</MenuItem>
-                    <MenuItem value="Em Atraso">Em Atraso</MenuItem>
+                    {paymentStatuses.map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Box>

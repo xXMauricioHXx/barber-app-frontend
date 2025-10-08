@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useAppointments } from "@/context/AppointmentContext";
 import { AppointmentStatusCard } from "@/components/AppointmentStatusCard";
+import { Breadcrumbs } from "@/components";
 import React, { useEffect, useMemo } from "react";
 import {
   formatTime,
@@ -53,19 +54,6 @@ export default function AppointmentsPage() {
   const formatEndTime = (startDate: Date): string => {
     const endDate = addHoursToDate(startDate, 1);
     return formatTime(endDate);
-  };
-
-  const getServiceTypeColor = (
-    serviceType: string
-  ): "primary" | "secondary" | "default" => {
-    switch (serviceType) {
-      case "Cabelo":
-        return "primary";
-      case "Cabelo e Barba":
-        return "secondary";
-      default:
-        return "default";
-    }
   };
 
   const getStatusColor = (
@@ -135,9 +123,7 @@ export default function AppointmentsPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Agenda
-      </Typography>
+      <Breadcrumbs />
 
       {/* Seletor de Data */}
       <Box sx={{ mb: 3 }}>

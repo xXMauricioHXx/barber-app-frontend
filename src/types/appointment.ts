@@ -1,4 +1,6 @@
+import { PlanNames } from "@/hooks/usePlans";
 import { Employee } from "./employee";
+import { ServiceType } from "./serviceType";
 
 export interface Appointment {
   id?: string;
@@ -19,8 +21,8 @@ export interface CreateAppointmentData {
   clientName: string;
   clientPhone?: string;
   scheduledTime: Date;
-  serviceType: "Cabelo" | "Cabelo e Barba";
-  clientPlan?: "Básico" | "Premium" | "VIP" | "Gold" | "Platinum";
+  serviceType: ServiceType;
+  clientPlan?: PlanNames;
   status: "Agendado" | "Confirmado" | "Concluído" | "Cancelado";
   clientId: string;
   selectedBarber?: Employee;
