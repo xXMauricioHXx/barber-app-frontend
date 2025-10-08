@@ -9,6 +9,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { collectionSchema } from "./collection";
 import { Employee } from "@/types/employee";
@@ -83,6 +84,36 @@ export const employeeService = {
     } catch (error) {
       console.error("Erro ao atualizar funcionário:", error);
       throw new Error("Erro ao atualizar funcionário. Tente novamente.");
+    }
+  },
+
+  async getEmployeeById(
+    barberId: string,
+    employeeId: string
+  ): Promise<Employee | null> {
+    try {
+      const employeeRef = doc(
+        db,
+        collectionSchema.barbers.name,
+        barberId,
+        collectionSchema.barbers.subCollections.employees.name,
+        employeeId
+      );
+      const employeeSnap = await getDoc(employeeRef);
+
+      if (!employeeSnap.exists()) {
+        return null;
+      }
+
+      return {
+        id: employeeSnap.id,
+        ...employeeSnap.data(),
+        createdAt: employeeSnap.data().createdAt?.toDate() || new Date(),
+        updatedAt: employeeSnap.data().updatedAt?.toDate() || new Date(),
+      } as Employee;
+    } catch (error) {
+      console.error("Erro ao buscar funcionário:", error);
+      throw new Error("Erro ao carregar funcionário. Tente novamente.");
     }
   },
 
