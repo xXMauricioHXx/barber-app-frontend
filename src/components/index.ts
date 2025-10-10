@@ -4,6 +4,7 @@ export { default as AppointmentStatsCard } from "./AppointmentStatsCard";
 export { default as AppointmentStatusCard } from "./AppointmentStatusCard";
 export { AppointmentActionButtons } from "./AppointmentActionButtons";
 export { default as TimeSlotSelector } from "./TimeSlotSelector";
+export { default as TimeSlotGrid } from "./TimeSlotGrid";
 export { default as Breadcrumbs } from "./Breadcrumbs";
 export { default as ClientStatsCard } from "./ClientStatsCard";
 

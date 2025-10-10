@@ -52,17 +52,8 @@ import { Employee } from "@/types/employee";
 import usePlans, { PlanNames } from "@/hooks/usePlans";
 import { ServiceType } from "@/types/serviceType";
 import useClientEligibility from "@/hooks/useClientEligibility";
-
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let hour = 8; hour < 18; hour++) {
-    slots.push(`${hour.toString().padStart(2, "0")}:00`);
-    slots.push(`${hour.toString().padStart(2, "0")}:30`);
-  }
-  return slots;
-};
-
-const TIME_SLOTS = generateTimeSlots();
+import { generateTimeSlots, filterAvailableSlots } from "@/utils/timeSlots";
+import { TimeSlotGrid } from "@/components/TimeSlotGrid";
 
 export default function AppointmentPage() {
   // Estados para agendamento
@@ -162,16 +153,30 @@ export default function AppointmentPage() {
   }, [client]);
 
   const availableTimeSlots = useMemo(() => {
-    if (!selectedDate || !selectedEmployee || !existingAppointments) {
-      return TIME_SLOTS;
+    if (!selectedDate || !selectedEmployee || !barber) {
+      return [];
     }
 
+    // Usar horários do barbeiro (estabelecimento)
+    const startWork = barber.startWork || "08:00";
+    const endWork = barber.endWork || "18:00";
+
+    // Gerar todos os slots possíveis
+    const allSlots = generateTimeSlots(startWork, endWork, 30);
+
+    // Se não há agendamentos, retornar todos os slots
+    if (!existingAppointments || existingAppointments.length === 0) {
+      return allSlots;
+    }
+
+    // Filtrar agendamentos para o funcionário e data específicos
     const dateAppointments = existingAppointments.filter((apt) => {
       const aptDate = apt.scheduledTime;
       return (
         aptDate.getDate() === selectedDate.getDate() &&
         aptDate.getMonth() === selectedDate.getMonth() &&
-        aptDate.getFullYear() === selectedDate.getFullYear()
+        aptDate.getFullYear() === selectedDate.getFullYear() &&
+        apt.selectedBarber?.id === selectedEmployee
       );
     });
 
@@ -179,8 +184,8 @@ export default function AppointmentPage() {
       format(apt.scheduledTime, "HH:mm")
     );
 
-    return TIME_SLOTS.filter((slot) => !busyTimes.includes(slot));
-  }, [selectedDate, selectedEmployee, existingAppointments]);
+    return filterAvailableSlots(allSlots, busyTimes);
+  }, [selectedDate, selectedEmployee, existingAppointments, barber]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -256,7 +261,8 @@ export default function AppointmentPage() {
 
       try {
         const appointments =
-          await appointmentService.getAppointmentsByBarberAndDate(
+          await appointmentService.getAppointmentsByEmployeeAndDate(
+            barberId,
             selectedEmployee,
             selectedDate
           );
@@ -268,7 +274,7 @@ export default function AppointmentPage() {
     };
 
     loadAppointments();
-  }, [selectedEmployee, selectedDate]);
+  }, [selectedEmployee, selectedDate, barberId]);
 
   const handleSubmit = async () => {
     if (
@@ -584,7 +590,7 @@ export default function AppointmentPage() {
                         label="Escolha o Horário"
                         onChange={(e) => setSelectedTime(e.target.value)}
                       >
-                        {availableTimeSlots.map((time) => (
+                        {availableTimeSlots.map((time: string) => (
                           <MenuItem key={time} value={time}>
                             {time}
                           </MenuItem>
@@ -603,6 +609,20 @@ export default function AppointmentPage() {
                         )}
                     </FormControl>
                   </Box>
+
+                  {/* Seleção de Horários com TimeSlotGrid */}
+                  {selectedDate && selectedEmployee && (
+                    <TimeSlotGrid
+                      availableSlots={availableTimeSlots}
+                      selectedTime={selectedTime}
+                      onTimeSelect={(time) => setSelectedTime(time)}
+                      disabled={
+                        !clientEligibility.canSchedule ||
+                        availableTimeSlots.length === 0
+                      }
+                      showPeriodDivision={availableTimeSlots.length > 8}
+                    />
+                  )}
 
                   {/* Botão de Confirmação */}
                   <Button

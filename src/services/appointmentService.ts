@@ -103,6 +103,47 @@ export const appointmentService = {
     }
   },
 
+  async getAppointmentsByEmployeeAndDate(
+    barberId: string,
+    employeeId: string,
+    date: Date
+  ): Promise<Appointment[]> {
+    try {
+      // Usar date-fns para obter início e fim do dia
+      const startOfDay = getStartOfDay(date);
+      const endOfDay = getEndOfDay(date);
+
+      const q = query(
+        collection(
+          db,
+          collectionSchema.barbers.name,
+          barberId,
+          collectionSchema.barbers.subCollections.appointments.name
+        ),
+        where("selectedBarber.id", "==", employeeId),
+        where("scheduledTime", ">=", Timestamp.fromDate(startOfDay)),
+        where("scheduledTime", "<=", Timestamp.fromDate(endOfDay)),
+        orderBy("scheduledTime", "asc")
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      return querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          scheduledTime: data.scheduledTime?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        };
+      }) as Appointment[];
+    } catch (error) {
+      console.error("Erro ao buscar agendamentos por funcionário:", error);
+      throw new Error("Erro ao carregar agendamentos. Tente novamente.");
+    }
+  },
+
   async getTodayAppointments(barberId: string): Promise<Appointment[]> {
     const today = new Date();
     return this.getAppointmentsByBarberAndDate(barberId, today);
