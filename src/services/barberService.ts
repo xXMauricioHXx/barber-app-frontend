@@ -1,4 +1,11 @@
-import { doc, getDoc, getDocs, collection } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getDocs,
+  collection,
+  updateDoc,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Barber } from "@/types/barbers";
 import { collectionSchema } from "./collection";
@@ -36,6 +43,32 @@ export const barberService = {
     } catch (error) {
       console.error("Erro ao buscar barbeiros:", error);
       throw new Error("Erro ao carregar barbeiros. Tente novamente.");
+    }
+  },
+
+  async updateBarberSettings(
+    barberId: string,
+    settings: Partial<Barber>
+  ): Promise<void> {
+    try {
+      const docRef = doc(db, collectionSchema.barbers.name, barberId);
+      await updateDoc(docRef, settings);
+    } catch (error) {
+      console.error("Erro ao atualizar configurações do barbeiro:", error);
+      throw new Error("Erro ao salvar configurações. Tente novamente.");
+    }
+  },
+
+  async createBarber(
+    barberId: string,
+    barberData: Omit<Barber, "id">
+  ): Promise<void> {
+    try {
+      const docRef = doc(db, collectionSchema.barbers.name, barberId);
+      await setDoc(docRef, barberData);
+    } catch (error) {
+      console.error("Erro ao criar barbeiro:", error);
+      throw new Error("Erro ao criar barbeiro. Tente novamente.");
     }
   },
 };
