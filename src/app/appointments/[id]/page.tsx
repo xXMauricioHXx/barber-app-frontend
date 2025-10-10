@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -86,7 +86,8 @@ export default function AppointmentPage() {
   const [clientAppointments, setClientAppointments] = useState<Appointment[]>(
     []
   );
-  const [viewDate, setViewDate] = useState<Date | null>(new Date());
+  const [viewDate, setViewDate] = useState<Date | null>(null);
+  const [showAllAppointments, setShowAllAppointments] = useState(true);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
 
   // Estados para cancelamento
@@ -98,26 +99,52 @@ export default function AppointmentPage() {
   // Hook para verificar elegibilidade do cliente
   const clientEligibility = useClientEligibility(client);
 
-  const router = useRouter();
   const resolvedParams = useParams();
   const ids = resolvedParams?.id as string;
   const [clientId, barberId] = ids ? ids.split("-") : ["", ""];
 
   // Filtrar agendamentos por data selecionada
   const filteredAppointments = useMemo(() => {
-    if (!viewDate || !clientAppointments.length) {
+    if (!clientAppointments.length) {
       return [];
     }
 
-    return clientAppointments.filter((appointment) => {
-      const appointmentDate = appointment.scheduledTime;
-      return (
-        appointmentDate.getDate() === viewDate.getDate() &&
-        appointmentDate.getMonth() === viewDate.getMonth() &&
-        appointmentDate.getFullYear() === viewDate.getFullYear()
-      );
+    let filtered = clientAppointments;
+
+    // Se showAllAppointments for false e há data selecionada, filtra por data
+    if (!showAllAppointments && viewDate) {
+      filtered = clientAppointments.filter((appointment) => {
+        const appointmentDate = appointment.scheduledTime;
+        return (
+          appointmentDate.getDate() === viewDate.getDate() &&
+          appointmentDate.getMonth() === viewDate.getMonth() &&
+          appointmentDate.getFullYear() === viewDate.getFullYear()
+        );
+      });
+    }
+
+    // Ordenar por data e hora (mais recente primeiro para agendamentos passados,
+    // mais próximo primeiro para agendamentos futuros)
+    return filtered.sort((a, b) => {
+      const now = new Date();
+      const aIsFuture = a.scheduledTime.getTime() > now.getTime();
+      const bIsFuture = b.scheduledTime.getTime() > now.getTime();
+
+      if (aIsFuture && bIsFuture) {
+        // Ambos no futuro: próximo primeiro
+        return a.scheduledTime.getTime() - b.scheduledTime.getTime();
+      } else if (!aIsFuture && !bIsFuture) {
+        // Ambos no passado: mais recente primeiro
+        return b.scheduledTime.getTime() - a.scheduledTime.getTime();
+      } else if (aIsFuture && !bIsFuture) {
+        // A no futuro, B no passado: A primeiro
+        return -1;
+      } else {
+        // A no passado, B no futuro: B primeiro
+        return 1;
+      }
     });
-  }, [clientAppointments, viewDate]);
+  }, [clientAppointments, viewDate, showAllAppointments]);
 
   const serviceType = useMemo(() => {
     if (!client) return null;
@@ -610,32 +637,77 @@ export default function AppointmentPage() {
               {/* Tab Panel - Meus Agendamentos */}
               {activeTab === 1 && (
                 <Stack spacing={3}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mb: 2,
-                    }}
-                  >
-                    <DatePicker
-                      label="Filtrar por Data"
-                      value={viewDate}
-                      onChange={(newValue) => setViewDate(newValue)}
-                      slotProps={{
-                        textField: {
-                          size: "small",
-                          sx: { minWidth: 200 },
-                        },
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Filtros
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        alignItems: { xs: "stretch", sm: "center" },
+                        gap: 2,
+                        mb: 2,
                       }}
-                    />
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setViewDate(new Date())}
                     >
-                      Hoje
-                    </Button>
+                      <Button
+                        variant={showAllAppointments ? "contained" : "outlined"}
+                        onClick={() => {
+                          setShowAllAppointments(true);
+                          setViewDate(null);
+                        }}
+                        size="medium"
+                        sx={{ minWidth: 150 }}
+                      >
+                        Todos os Agendamentos
+                      </Button>
+
+                      <Button
+                        variant={
+                          !showAllAppointments &&
+                          viewDate &&
+                          viewDate.toDateString() === new Date().toDateString()
+                            ? "contained"
+                            : "outlined"
+                        }
+                        onClick={() => {
+                          setViewDate(new Date());
+                          setShowAllAppointments(false);
+                        }}
+                        size="medium"
+                      >
+                        Hoje
+                      </Button>
+
+                      <DatePicker
+                        label="Escolha a Data"
+                        value={viewDate}
+                        onChange={(newValue) => {
+                          setViewDate(newValue);
+                          setShowAllAppointments(false);
+                        }}
+                        slotProps={{
+                          textField: {
+                            //size: "medium",
+                            //sx: { minWidth: 200 },
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    {/* Mostrar informação sobre o filtro atual */}
+                    <Typography variant="body2" color="text.secondary">
+                      {showAllAppointments
+                        ? `Exibindo todos os agendamentos (${clientAppointments.length} total)`
+                        : viewDate
+                        ? `Filtrado para ${formatDateLabel(viewDate)} (${
+                            filteredAppointments.length
+                          } agendamento${
+                            filteredAppointments.length !== 1 ? "s" : ""
+                          })`
+                        : "Selecione uma data para filtrar"}
+                    </Typography>
                   </Box>
 
                   {loadingAppointments ? (
@@ -659,15 +731,34 @@ export default function AppointmentPage() {
                             mx: "auto",
                           }}
                         />
-                        Nenhum agendamento encontrado
+                        {clientAppointments.length === 0
+                          ? "Nenhum agendamento encontrado"
+                          : "Nenhum agendamento para esta data"}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {viewDate
+                        {clientAppointments.length === 0
+                          ? "Você ainda não possui agendamentos."
+                          : showAllAppointments
+                          ? "Não há agendamentos para exibir."
+                          : viewDate
                           ? `Não há agendamentos para ${formatDateLabel(
                               viewDate
-                            )}`
-                          : "Você ainda não possui agendamentos."}
+                            )}.`
+                          : "Selecione uma data ou visualize todos os agendamentos."}
                       </Typography>
+                      {clientAppointments.length > 0 &&
+                        !showAllAppointments && (
+                          <Button
+                            variant="outlined"
+                            onClick={() => {
+                              setShowAllAppointments(true);
+                              setViewDate(null);
+                            }}
+                            sx={{ mt: 2 }}
+                          >
+                            Ver Todos os Agendamentos
+                          </Button>
+                        )}
                     </Paper>
                   ) : (
                     <List>
@@ -682,14 +773,26 @@ export default function AppointmentPage() {
                                 mb: 2,
                               }}
                             >
-                              <Typography variant="h6" component="div">
-                                <TimeIcon
-                                  sx={{ mr: 1, verticalAlign: "middle" }}
-                                />
-                                {format(appointment.scheduledTime, "HH:mm", {
-                                  locale: ptBR,
-                                })}
-                              </Typography>
+                              <Box>
+                                <Typography variant="h6" component="div">
+                                  <EventIcon
+                                    sx={{ mr: 1, verticalAlign: "middle" }}
+                                  />
+                                  {formatDateLabel(appointment.scheduledTime)}
+                                </Typography>
+                                <Typography
+                                  variant="h5"
+                                  component="div"
+                                  sx={{ ml: 3 }}
+                                >
+                                  <TimeIcon
+                                    sx={{ mr: 1, verticalAlign: "middle" }}
+                                  />
+                                  {format(appointment.scheduledTime, "HH:mm", {
+                                    locale: ptBR,
+                                  })}
+                                </Typography>
+                              </Box>
                               <Chip
                                 label={appointment.status}
                                 color={getStatusColor(appointment.status)}
@@ -737,21 +840,24 @@ export default function AppointmentPage() {
                                 </Box>
                               )}
 
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                <EventIcon
-                                  sx={{ fontSize: 16, color: "text.secondary" }}
-                                />
-                                <Typography variant="body2">
-                                  <strong>Data:</strong>{" "}
-                                  {formatDateLabel(appointment.scheduledTime)}
-                                </Typography>
-                              </Box>
+                              {appointment.clientPlan && (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Typography variant="body2">
+                                    <strong>Plano utilizado:</strong>{" "}
+                                    <Chip
+                                      label={appointment.clientPlan}
+                                      sx={getPlanStyle(appointment.clientPlan)}
+                                      size="small"
+                                    />
+                                  </Typography>
+                                </Box>
+                              )}
 
                               {/* Botão de cancelamento */}
                               {canCancelAppointment(appointment) && (
