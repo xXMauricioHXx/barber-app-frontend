@@ -7,6 +7,7 @@ export interface Client {
   phone: string;
   plan: PlanNames;
   paymentStatus: string;
+  planExpiryDate: Date;
   createdAt: Date;
   updatedAt: Date;
   appointments?: Appointment[];
@@ -17,4 +18,5 @@ export interface CreateClientData {
   phone: string;
   plan: PlanNames;
   paymentStatus: string;
+  planExpiryDate: Date;
 }

@@ -23,19 +23,24 @@ import {
   Tab,
   Divider,
   List,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import {
   Event as EventIcon,
   AccessTime as TimeIcon,
   Person as PersonIcon,
   ContentCut as ServiceIcon,
+  Cancel as CancelIcon,
 } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { format, isToday, isTomorrow, addDays } from "date-fns";
-import { getDocs } from "firebase/firestore";
 import { Client } from "@/types/client";
 import { Barber } from "@/types/barbers";
 import { Appointment } from "@/types/appointment";
@@ -46,6 +51,7 @@ import { employeeService } from "@/services/employeesService";
 import { Employee } from "@/types/employee";
 import usePlans, { PlanNames } from "@/hooks/usePlans";
 import { ServiceType } from "@/types/serviceType";
+import useClientEligibility from "@/hooks/useClientEligibility";
 
 const generateTimeSlots = () => {
   const slots = [];
@@ -82,6 +88,15 @@ export default function AppointmentPage() {
   );
   const [viewDate, setViewDate] = useState<Date | null>(new Date());
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+
+  // Estados para cancelamento
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedAppointmentToCancel, setSelectedAppointmentToCancel] =
+    useState<Appointment | null>(null);
+  const [cancellingAppointment, setCancellingAppointment] = useState(false);
+
+  // Hook para verificar elegibilidade do cliente
+  const clientEligibility = useClientEligibility(client);
 
   const router = useRouter();
   const resolvedParams = useParams();
@@ -240,6 +255,13 @@ export default function AppointmentPage() {
       return;
     }
 
+    // Verificar elegibilidade do cliente
+    if (!clientEligibility.canSchedule) {
+      const reasons = clientEligibility.reasonsBlocked.join(", ");
+      setError(`Não é possível realizar agendamento: ${reasons}`);
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError("");
@@ -316,6 +338,62 @@ export default function AppointmentPage() {
     setActiveTab(newValue);
   };
 
+  const canCancelAppointment = (appointment: Appointment): boolean => {
+    // Só pode cancelar se estiver agendado ou confirmado
+    if (!["Agendado", "Confirmado"].includes(appointment.status)) {
+      return false;
+    }
+
+    // Verificar se não é muito próximo do horário (menos de 2 horas)
+    const now = new Date();
+    const appointmentTime = appointment.scheduledTime;
+    const hoursDifference =
+      (appointmentTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    return hoursDifference >= 2;
+  };
+
+  const handleCancelAppointment = async () => {
+    if (
+      !selectedAppointmentToCancel ||
+      !selectedAppointmentToCancel.id ||
+      !clientId
+    ) {
+      setError("Dados do agendamento incompletos");
+      return;
+    }
+
+    try {
+      setCancellingAppointment(true);
+      setError("");
+
+      await appointmentService.cancelAppointmentByClient(
+        barberId,
+        selectedAppointmentToCancel.id,
+        clientId
+      );
+
+      setSuccess("Agendamento cancelado com sucesso!");
+      setCancelDialogOpen(false);
+      setSelectedAppointmentToCancel(null);
+
+      // Recarregar a lista de agendamentos
+      const appointments = await clientService.getClientAppointments(clientId);
+      setClientAppointments(appointments);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao cancelar agendamento"
+      );
+    } finally {
+      setCancellingAppointment(false);
+    }
+  };
+
+  const openCancelDialog = (appointment: Appointment) => {
+    setSelectedAppointmentToCancel(appointment);
+    setCancelDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
@@ -381,6 +459,32 @@ export default function AppointmentPage() {
                   >
                     Estabelecimento: <strong>{barber?.name || "N/A"}</strong>
                   </Typography>
+
+                  {/* Alertas de elegibilidade */}
+                  {clientEligibility.warningMessage && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                      {clientEligibility.warningMessage}
+                    </Alert>
+                  )}
+
+                  {!clientEligibility.canSchedule && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      <Typography variant="body2" component="div">
+                        <strong>Agendamento bloqueado:</strong>
+                      </Typography>
+                      <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                        {clientEligibility.reasonsBlocked.map(
+                          (reason, index) => (
+                            <li key={index}>{reason}</li>
+                          )
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Entre em contato com o estabelecimento para regularizar
+                        sua situação.
+                      </Typography>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
 
@@ -489,7 +593,8 @@ export default function AppointmentPage() {
                       !selectedEmployee ||
                       !selectedDate ||
                       !selectedTime ||
-                      availableTimeSlots.length === 0
+                      availableTimeSlots.length === 0 ||
+                      !clientEligibility.canSchedule
                     }
                     sx={{ mt: 2 }}
                   >
@@ -498,6 +603,8 @@ export default function AppointmentPage() {
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Agendando...
                       </>
+                    ) : !clientEligibility.canSchedule ? (
+                      "Agendamento Bloqueado"
                     ) : (
                       "Confirmar Agendamento"
                     )}
@@ -650,6 +757,39 @@ export default function AppointmentPage() {
                                   {formatDateLabel(appointment.scheduledTime)}
                                 </Typography>
                               </Box>
+
+                              {/* Botão de cancelamento */}
+                              {canCancelAppointment(appointment) && (
+                                <Box sx={{ mt: 2, pt: 1 }}>
+                                  <Button
+                                    variant="outlined"
+                                    color="error"
+                                    size="small"
+                                    startIcon={<CancelIcon />}
+                                    onClick={() =>
+                                      openCancelDialog(appointment)
+                                    }
+                                    fullWidth
+                                  >
+                                    Cancelar Agendamento
+                                  </Button>
+                                </Box>
+                              )}
+
+                              {!canCancelAppointment(appointment) &&
+                                ["Agendado", "Confirmado"].includes(
+                                  appointment.status
+                                ) && (
+                                  <Box sx={{ mt: 2, pt: 1 }}>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Agendamentos só podem ser cancelados com
+                                      pelo menos 2 horas de antecedência
+                                    </Typography>
+                                  </Box>
+                                )}
                             </Stack>
                           </CardContent>
                         </Card>
@@ -661,6 +801,65 @@ export default function AppointmentPage() {
             </Box>
           )}
         </Paper>
+
+        {/* Dialog de Cancelamento */}
+        <Dialog
+          open={cancelDialogOpen}
+          onClose={() => !cancellingAppointment && setCancelDialogOpen(false)}
+          aria-labelledby="cancel-appointment-dialog-title"
+          aria-describedby="cancel-appointment-dialog-description"
+        >
+          <DialogTitle id="cancel-appointment-dialog-title">
+            Cancelar Agendamento
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="cancel-appointment-dialog-description">
+              {selectedAppointmentToCancel && (
+                <>
+                  Tem certeza que deseja cancelar seu agendamento para{" "}
+                  <strong>
+                    {formatDateLabel(selectedAppointmentToCancel.scheduledTime)}{" "}
+                    às{" "}
+                    {format(
+                      selectedAppointmentToCancel.scheduledTime,
+                      "HH:mm",
+                      {
+                        locale: ptBR,
+                      }
+                    )}
+                  </strong>
+                  ?
+                </>
+              )}
+            </DialogContentText>
+            <DialogContentText sx={{ mt: 1, color: "error.main" }}>
+              Esta ação não pode ser desfeita.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={cancellingAppointment}
+            >
+              Manter Agendamento
+            </Button>
+            <Button
+              onClick={handleCancelAppointment}
+              variant="contained"
+              color="error"
+              disabled={cancellingAppointment}
+              startIcon={
+                cancellingAppointment ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <CancelIcon />
+                )
+              }
+            >
+              {cancellingAppointment ? "Cancelando..." : "Cancelar Agendamento"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={!!error}

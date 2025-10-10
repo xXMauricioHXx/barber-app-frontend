@@ -18,11 +18,16 @@ import {
   Skeleton,
 } from "@mui/material";
 import { Save as SaveIcon } from "@mui/icons-material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { ptBR } from "date-fns/locale";
 import { CreateClientData, Client } from "@/types/client";
 import { clientService } from "@/services/clientService";
 import { useAuth } from "@/context/AuthContext";
 import { Custom404, Breadcrumbs } from "@/components";
-import usePlans from "@/hooks/usePlans";
+import usePlans, { PlanNames } from "@/hooks/usePlans";
+import { calculatePlanExpiryDate } from "@/hooks/useClientEligibility";
 
 export default function EditClientPage() {
   const router = useRouter();
@@ -47,6 +52,7 @@ export default function EditClientPage() {
     phone: "",
     plan: defaultPlan.name,
     paymentStatus: defaultPlanStatus,
+    planExpiryDate: calculatePlanExpiryDate(defaultPlan.name),
   });
 
   const [errors, setErrors] = useState({
@@ -74,6 +80,9 @@ export default function EditClientPage() {
           phone: clientData.phone,
           plan: clientData.plan,
           paymentStatus: clientData.paymentStatus,
+          planExpiryDate:
+            clientData.planExpiryDate ||
+            calculatePlanExpiryDate(clientData.plan),
         });
       } catch (error) {
         setSnackbar({
@@ -125,7 +134,10 @@ export default function EditClientPage() {
     return !newErrors.name && !newErrors.phone;
   };
 
-  const handleInputChange = (field: keyof CreateClientData, value: string) => {
+  const handleInputChange = (
+    field: keyof CreateClientData,
+    value: string | Date
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -137,6 +149,15 @@ export default function EditClientPage() {
         [field]: "",
       }));
     }
+  };
+
+  const handlePlanChange = (newPlan: string) => {
+    const planExpiryDate = calculatePlanExpiryDate(newPlan as PlanNames);
+    setFormData((prev) => ({
+      ...prev,
+      plan: newPlan as PlanNames,
+      planExpiryDate,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,140 +202,166 @@ export default function EditClientPage() {
   };
 
   return (
-    <Box>
-      <Breadcrumbs
-        title={
-          loading ? "Carregando..." : `Editar Cliente: ${client?.name || ""}`
-        }
-      />
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+      <Box>
+        <Breadcrumbs
+          title={
+            loading ? "Carregando..." : `Editar Cliente: ${client?.name || ""}`
+          }
+        />
 
-      <Card sx={{ maxWidth: 600 }}>
-        <CardContent sx={{ p: 4 }}>
-          {loading ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <Skeleton variant="rounded" height={56} />
-              <Skeleton variant="rounded" height={56} />
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <Skeleton variant="rounded" height={56} sx={{ flex: 1 }} />
-                <Skeleton variant="rounded" height={56} sx={{ flex: 1 }} />
+        <Card sx={{ maxWidth: 600 }}>
+          <CardContent sx={{ p: 4 }}>
+            {loading ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <Skeleton variant="rounded" height={56} />
+                <Skeleton variant="rounded" height={56} />
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Skeleton variant="rounded" height={56} sx={{ flex: 1 }} />
+                  <Skeleton variant="rounded" height={56} sx={{ flex: 1 }} />
+                </Box>
+                <Skeleton variant="rounded" height={56} />
               </Box>
-            </Box>
-          ) : (
-            <>
-              <form onSubmit={handleSubmit}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <TextField
-                    fullWidth
-                    label="Nome Completo"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    error={!!errors.name}
-                    helperText={errors.name}
-                    required
-                    disabled={saving}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Telefone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    error={!!errors.phone}
-                    helperText={errors.phone}
-                    placeholder="(11) 99999-9999"
-                    required
-                    disabled={saving}
-                  />
-
+            ) : (
+              <>
+                <form onSubmit={handleSubmit}>
                   <Box
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      flexDirection: { xs: "column", sm: "row" },
-                    }}
+                    sx={{ display: "flex", flexDirection: "column", gap: 3 }}
                   >
-                    <FormControl fullWidth disabled={saving}>
-                      <InputLabel>Plano</InputLabel>
-                      <Select
-                        value={formData.plan}
-                        label="Plano"
-                        onChange={(e) =>
-                          handleInputChange("plan", e.target.value)
-                        }
-                      >
-                        {plans.map((plan) => (
-                          <MenuItem key={plan.name} value={plan.name}>
-                            {plan.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth disabled={saving}>
-                      <InputLabel>Status do Pagamento</InputLabel>
-                      <Select
-                        value={formData.paymentStatus}
-                        label="Status do Pagamento"
-                        onChange={(e) =>
-                          handleInputChange("paymentStatus", e.target.value)
-                        }
-                      >
-                        {paymentStatuses.map((status) => (
-                          <MenuItem key={status} value={status}>
-                            {status}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      justifyContent: "flex-end",
-                      mt: 2,
-                    }}
-                  >
-                    <Button
-                      variant="outlined"
-                      onClick={handleCancel}
+                    <TextField
+                      fullWidth
+                      label="Nome Completo"
+                      value={formData.name}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
+                      error={!!errors.name}
+                      helperText={errors.name}
+                      required
                       disabled={saving}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Telefone"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                      error={!!errors.phone}
+                      helperText={errors.phone}
+                      placeholder="(11) 99999-9999"
+                      required
+                      disabled={saving}
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        flexDirection: { xs: "column", sm: "row" },
+                      }}
                     >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      startIcon={
-                        saving ? <CircularProgress size={20} /> : <SaveIcon />
+                      <FormControl fullWidth disabled={saving}>
+                        <InputLabel>Plano</InputLabel>
+                        <Select
+                          value={formData.plan}
+                          label="Plano"
+                          onChange={(e) => handlePlanChange(e.target.value)}
+                        >
+                          {plans.map((plan) => (
+                            <MenuItem key={plan.name} value={plan.name}>
+                              {plan.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth disabled={saving}>
+                        <InputLabel>Status do Pagamento</InputLabel>
+                        <Select
+                          value={formData.paymentStatus}
+                          label="Status do Pagamento"
+                          onChange={(e) =>
+                            handleInputChange("paymentStatus", e.target.value)
+                          }
+                        >
+                          {paymentStatuses.map((status) => (
+                            <MenuItem key={status} value={status}>
+                              {status}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
+
+                    <DatePicker
+                      label="Data de Vencimento do Plano"
+                      value={formData.planExpiryDate}
+                      onChange={(newValue) =>
+                        handleInputChange(
+                          "planExpiryDate",
+                          newValue || new Date()
+                        )
                       }
                       disabled={saving}
-                    >
-                      {saving ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  </Box>
-                </Box>
-              </form>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          helperText:
+                            "A data será calculada automaticamente ao alterar o plano",
+                        },
+                      }}
+                    />
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        justifyContent: "flex-end",
+                        mt: 2,
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        onClick={handleCancel}
+                        disabled={saving}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        startIcon={
+                          saving ? <CircularProgress size={20} /> : <SaveIcon />
+                        }
+                        disabled={saving}
+                      >
+                        {saving ? "Salvando..." : "Salvar Alterações"}
+                      </Button>
+                    </Box>
+                  </Box>
+                </form>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
           onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </LocalizationProvider>
   );
 }

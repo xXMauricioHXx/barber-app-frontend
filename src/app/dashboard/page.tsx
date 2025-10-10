@@ -3,7 +3,11 @@
 import { Box, Typography, Card, CardContent } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
 import { useAppointments } from "@/context/AppointmentContext";
-import { AppointmentStatsCard, Breadcrumbs } from "@/components";
+import {
+  AppointmentStatsCard,
+  Breadcrumbs,
+  ClientStatsCard,
+} from "@/components";
 import React, { useEffect } from "react";
 import { barberService } from "@/services/barberService";
 
@@ -49,16 +53,7 @@ export default function DashboardPage() {
         }}
       >
         <AppointmentStatsCard variant="today" showLastUpdated />
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Clientes Ativos
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              0
-            </Typography>
-          </CardContent>
-        </Card>
+        <ClientStatsCard />
 
         <Card>
           <CardContent>
