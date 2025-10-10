@@ -17,13 +17,17 @@ interface AppointmentContextType {
   loading: boolean;
   error: string | null;
   selectedDate: Date;
+  viewAllAppointments: boolean;
   loadTodayAppointments: (barberId: string) => Promise<void>;
   loadAppointmentsByDate: (barberId: string, date: Date) => Promise<void>;
+  loadAllAppointments: (barberId: string) => Promise<void>;
   refreshStats: (barberId: string) => Promise<void>;
   getTodayTotal: () => number;
   getAppointmentsByStatus: (status: string) => Appointment[];
   setSelectedDate: (date: Date) => void;
+  setViewAllAppointments: (viewAll: boolean) => void;
   clearCache: () => void;
+  filterAppointmentsByDate: (date: Date) => Appointment[];
 }
 
 const AppointmentContext = createContext<AppointmentContextType>({
@@ -37,13 +41,17 @@ const AppointmentContext = createContext<AppointmentContextType>({
   loading: false,
   error: null,
   selectedDate: new Date(),
+  viewAllAppointments: false,
   loadTodayAppointments: async () => {},
   loadAppointmentsByDate: async () => {},
+  loadAllAppointments: async () => {},
   refreshStats: async () => {},
   getTodayTotal: () => 0,
   getAppointmentsByStatus: () => [],
   setSelectedDate: () => {},
+  setViewAllAppointments: () => {},
   clearCache: () => {},
+  filterAppointmentsByDate: () => [],
 });
 
 export const useAppointments = () => {
@@ -71,6 +79,7 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewAllAppointments, setViewAllAppointments] = useState(false);
 
   const loadTodayAppointments = useCallback(async (barberId: string) => {
     try {
@@ -97,6 +106,24 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
       setLoading(false);
     }
   }, []);
+
+  const filterAppointmentsByDate = useCallback(
+    (date: Date) => {
+      const filteredAppointments = appointments.filter((appointment) => {
+        const appointmentDate = new Date(appointment.scheduledTime);
+        return (
+          appointmentDate.getFullYear() === date.getFullYear() &&
+          appointmentDate.getMonth() === date.getMonth() &&
+          appointmentDate.getDate() === date.getDate()
+        );
+      });
+
+      setAppointments(filteredAppointments);
+
+      return filteredAppointments;
+    },
+    [appointments]
+  );
 
   const loadAppointmentsByDate = useCallback(
     async (barberId: string, date: Date) => {
@@ -133,6 +160,25 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
     },
     []
   );
+
+  const loadAllAppointments = useCallback(async (barberId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const allAppointments =
+        await appointmentService.getAllAppointmentsByBarber(barberId);
+      console.log("All Appointments:", allAppointments);
+      setAppointments(allAppointments);
+    } catch (err) {
+      console.error("Erro ao carregar todos os agendamentos:", err);
+      setError(
+        err instanceof Error ? err.message : "Erro ao carregar agendamentos"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const refreshStats = useCallback(async (barberId: string) => {
     try {
@@ -172,6 +218,7 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
     });
     setError(null);
     setSelectedDate(new Date());
+    setViewAllAppointments(false);
   }, []);
 
   const value = {
@@ -180,13 +227,17 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
     loading,
     error,
     selectedDate,
+    viewAllAppointments,
     loadTodayAppointments,
     loadAppointmentsByDate,
+    loadAllAppointments,
     refreshStats,
     getTodayTotal,
     getAppointmentsByStatus,
     setSelectedDate,
+    setViewAllAppointments,
     clearCache,
+    filterAppointmentsByDate,
   };
 
   return (

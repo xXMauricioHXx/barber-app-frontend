@@ -177,10 +177,6 @@ export default function EditClientPage() {
         message: "Cliente atualizado com sucesso!",
         severity: "success",
       });
-
-      setTimeout(() => {
-        router.push("/dashboard/clients");
-      }, 1000);
     } catch (error) {
       setSnackbar({
         open: true,
@@ -204,11 +200,7 @@ export default function EditClientPage() {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
       <Box>
-        <Breadcrumbs
-          title={
-            loading ? "Carregando..." : `Editar Cliente: ${client?.name || ""}`
-          }
-        />
+        <Breadcrumbs title={loading ? "Carregando..." : `Editar Cliente`} />
 
         <Card sx={{ maxWidth: 600 }}>
           <CardContent sx={{ p: 4 }}>

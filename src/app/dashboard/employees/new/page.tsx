@@ -55,7 +55,7 @@ export default function NewEmployeePage() {
       router.push("/dashboard/employees");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao criar funcionário"
+        err instanceof Error ? err.message : "Erro ao criar colaborador"
       );
     } finally {
       setLoading(false);
@@ -72,7 +72,7 @@ export default function NewEmployeePage() {
 
       <Paper sx={{ p: 3, maxWidth: 600 }}>
         <Typography variant="h5" component="h1" gutterBottom>
-          Novo Funcionário
+          Novo Colaborador
         </Typography>
 
         {error && (
@@ -94,7 +94,7 @@ export default function NewEmployeePage() {
             inputProps={{
               "aria-describedby": "name-helper",
             }}
-            helperText="Nome completo do funcionário"
+            helperText="Nome completo do colaborador"
           />
 
           <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>

@@ -136,17 +136,8 @@ export const AppointmentActionButtons: React.FC<
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}
           >
-            <Box
-              component="span"
-              sx={{ display: { xs: "none", sm: "inline" } }}
-            >
+            <Box component="span" sx={{ display: { sm: "inline" } }}>
               Confirmar
-            </Box>
-            <Box
-              component="span"
-              sx={{ display: { xs: "inline", sm: "none" } }}
-            >
-              ✓
             </Box>
           </Button>
         )}
@@ -172,17 +163,8 @@ export const AppointmentActionButtons: React.FC<
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}
           >
-            <Box
-              component="span"
-              sx={{ display: { xs: "none", sm: "inline" } }}
-            >
+            <Box component="span" sx={{ display: { sm: "inline" } }}>
               Cancelar
-            </Box>
-            <Box
-              component="span"
-              sx={{ display: { xs: "inline", sm: "none" } }}
-            >
-              ✕
             </Box>
           </Button>
         )}

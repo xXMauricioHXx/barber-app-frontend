@@ -42,7 +42,7 @@ const menuItems = [
     href: "/dashboard/clients",
   },
   {
-    text: "Funcionários",
+    text: "Colaboradores",
     icon: <AccountCircleIcon />,
     href: "/dashboard/employees",
   },

@@ -172,6 +172,36 @@ export const appointmentService = {
     );
   },
 
+  async getAllAppointmentsByBarber(barberId: string): Promise<Appointment[]> {
+    try {
+      const q = query(
+        collection(
+          db,
+          collectionSchema.barbers.name,
+          barberId,
+          collectionSchema.barbers.subCollections.appointments.name
+        ),
+        orderBy("scheduledTime", "desc")
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      return querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          scheduledTime: data.scheduledTime?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        };
+      }) as Appointment[];
+    } catch (error) {
+      console.error("Erro ao buscar todos os agendamentos:", error);
+      throw new Error("Erro ao carregar agendamentos. Tente novamente.");
+    }
+  },
+
   async getAppointmentStats(barberId: string) {
     try {
       const [todayAppointments, weekAppointments, monthAppointments] =

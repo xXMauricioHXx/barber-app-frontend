@@ -116,10 +116,6 @@ export default function NewClientPage() {
         message: "Cliente cadastrado com sucesso!",
         severity: "success",
       });
-
-      setTimeout(() => {
-        router.push("/dashboard/clients");
-      }, 100);
     } catch (error) {
       setSnackbar({
         open: true,

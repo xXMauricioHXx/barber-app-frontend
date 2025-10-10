@@ -297,11 +297,6 @@ export default function AppointmentPage() {
       setSelectedDate(null);
       setSelectedTime("");
       setExistingAppointments([]);
-
-      // Redirecionar após 2 segundos
-      setTimeout(() => {
-        router.push(`/appointments/${ids}/success`);
-      }, 500);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erro ao realizar agendamento"

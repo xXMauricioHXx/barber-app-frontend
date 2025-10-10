@@ -59,7 +59,7 @@ export default function EmployeesPage() {
       setEmployees(employeesList);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao carregar funcionários"
+        err instanceof Error ? err.message : "Erro ao carregar colaboradores"
       );
     } finally {
       setLoading(false);
@@ -106,7 +106,7 @@ export default function EmployeesPage() {
         await loadEmployees(); // Recarrega a lista
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Erro ao deletar funcionário"
+          err instanceof Error ? err.message : "Erro ao deletar colaborador"
         );
       }
     }
@@ -147,7 +147,7 @@ export default function EmployeesPage() {
               >
                 <PersonIcon fontSize="small" color="action" />
                 <Typography variant="body2" color="text.secondary">
-                  Funcionário
+                  Colaborador
                 </Typography>
               </Box>
             </Box>
@@ -195,7 +195,7 @@ export default function EmployeesPage() {
           onClick={handleNewEmployee}
           fullWidth={isMobile}
         >
-          Novo Funcionário
+          Novo Colaborador
         </Button>
       </Box>
 
@@ -209,17 +209,17 @@ export default function EmployeesPage() {
         <Box
           sx={{ display: "flex", justifyContent: "center", p: 4 }}
           role="status"
-          aria-label="Carregando funcionários"
+          aria-label="Carregando colaboradores"
         >
           <CircularProgress />
         </Box>
       ) : employees.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: "center" }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            Nenhum funcionário cadastrado
+            Nenhum colaborador cadastrado
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Comece adicionando o primeiro funcionário da sua barbearia.
+            Comece adicionando o primeiro colaborador da sua barbearia.
           </Typography>
           <Button
             variant="contained"
@@ -227,14 +227,14 @@ export default function EmployeesPage() {
             onClick={handleNewEmployee}
             fullWidth={isMobile}
           >
-            Cadastrar Primeiro Funcionário
+            Cadastrar Primeiro Colaborador
           </Button>
         </Paper>
       ) : isMobile ? (
         <Box>{employees.map(renderMobileEmployeeCard)}</Box>
       ) : (
         <TableContainer component={Paper}>
-          <Table aria-label="Tabela de funcionários">
+          <Table aria-label="Tabela de colaboradores">
             <TableHead>
               <TableRow>
                 <TableCell>Nome</TableCell>

@@ -72,7 +72,7 @@ export default function EditEmployeePage() {
           message:
             error instanceof Error
               ? error.message
-              : "Erro ao carregar funcionário",
+              : "Erro ao carregar colaborador",
           severity: "error",
         });
         router.push("/dashboard/employees");
@@ -86,12 +86,12 @@ export default function EditEmployeePage() {
     }
   }, [employeeId, user?.uid, router]);
 
-  // Se o funcionário não foi encontrado, mostra a página 404 customizada
+  // Se o colaborador não foi encontrado, mostra a página 404 customizada
   if (employeeNotFound) {
     return (
       <Custom404
-        title="Funcionário não encontrado"
-        message="O funcionário que você está procurando não existe ou foi removido do sistema. Verifique se o ID está correto ou volte para a lista de funcionários."
+        title="Colaborador não encontrado"
+        message="O colaborador que você está procurando não existe ou foi removido do sistema. Verifique se o ID está correto ou volte para a lista de colaboradores."
         homeLink="/dashboard/employees"
         backLink="/dashboard/employees"
       />
@@ -146,20 +146,16 @@ export default function EditEmployeePage() {
 
       setSnackbar({
         open: true,
-        message: "Funcionário atualizado com sucesso!",
+        message: "Colaborador atualizado com sucesso!",
         severity: "success",
       });
-
-      setTimeout(() => {
-        router.push("/dashboard/employees");
-      }, 1000);
     } catch (error) {
       setSnackbar({
         open: true,
         message:
           error instanceof Error
             ? error.message
-            : "Erro ao atualizar funcionário",
+            : "Erro ao atualizar colaborador",
         severity: "error",
       });
     } finally {
@@ -191,7 +187,7 @@ export default function EditEmployeePage() {
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   <TextField
                     fullWidth
-                    label="Nome do Funcionário"
+                    label="Nome do Colaborador"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     error={!!errors.name}

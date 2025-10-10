@@ -21,9 +21,9 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
       "/dashboard/clients": "Clientes",
       "/dashboard/clients/new": "Novo Cliente",
       "/dashboard/clients/[id]/edit": "Editar Cliente",
-      "/dashboard/employees": "Funcionários",
-      "/dashboard/employees/new": "Novo Funcionário",
-      "/dashboard/employees/[id]/edit": "Editar Funcionário",
+      "/dashboard/employees": "Colaboradores",
+      "/dashboard/employees/new": "Novo Colaborador",
+      "/dashboard/employees/[id]/edit": "Editar Colaborador",
       "/dashboard/settings": "Configurações",
     };
 

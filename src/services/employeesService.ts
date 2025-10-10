@@ -35,8 +35,8 @@ export const employeeService = {
         updatedAt: doc.data().updatedAt?.toDate() || new Date(),
       })) as Employee[];
     } catch (error) {
-      console.error("Erro ao buscar funcionários:", error);
-      throw new Error("Erro ao carregar funcionários. Tente novamente.");
+      console.error("Erro ao buscar colaboradores:", error);
+      throw new Error("Erro ao carregar colaboradores. Tente novamente.");
     }
   },
 
@@ -59,8 +59,8 @@ export const employeeService = {
         }
       );
     } catch (error) {
-      console.error("Erro ao criar funcionário:", error);
-      throw new Error("Erro ao criar funcionário. Tente novamente.");
+      console.error("Erro ao criar colaborador:", error);
+      throw new Error("Erro ao criar colaborador. Tente novamente.");
     }
   },
 
@@ -82,8 +82,8 @@ export const employeeService = {
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
-      console.error("Erro ao atualizar funcionário:", error);
-      throw new Error("Erro ao atualizar funcionário. Tente novamente.");
+      console.error("Erro ao atualizar colaborador:", error);
+      throw new Error("Erro ao atualizar colaborador. Tente novamente.");
     }
   },
 
@@ -112,8 +112,8 @@ export const employeeService = {
         updatedAt: employeeSnap.data().updatedAt?.toDate() || new Date(),
       } as Employee;
     } catch (error) {
-      console.error("Erro ao buscar funcionário:", error);
-      throw new Error("Erro ao carregar funcionário. Tente novamente.");
+      console.error("Erro ao buscar colaborador:", error);
+      throw new Error("Erro ao carregar colaborador. Tente novamente.");
     }
   },
 
@@ -128,8 +128,8 @@ export const employeeService = {
       );
       await deleteDoc(employeeRef);
     } catch (error) {
-      console.error("Erro ao deletar funcionário:", error);
-      throw new Error("Erro ao deletar funcionário. Tente novamente.");
+      console.error("Erro ao deletar colaborador:", error);
+      throw new Error("Erro ao deletar colaborador. Tente novamente.");
     }
   },
 };
