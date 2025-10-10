@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useAppointments } from "@/context/AppointmentContext";
 import { AppointmentStatusCard } from "@/components/AppointmentStatusCard";
+import { AppointmentActionButtons } from "@/components";
 import { Breadcrumbs } from "@/components";
 import React, { useEffect, useMemo } from "react";
 import {
@@ -87,6 +88,12 @@ export default function AppointmentsPage() {
   };
 
   const handleRetry = () => {
+    if (user?.uid) {
+      loadAppointmentsByDate(user.uid, selectedDate);
+    }
+  };
+
+  const handleStatusUpdate = () => {
     if (user?.uid) {
       loadAppointmentsByDate(user.uid, selectedDate);
     }
@@ -230,97 +237,130 @@ export default function AppointmentsPage() {
                     py: 2,
                     px: 3,
                     alignItems: "flex-start",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: { xs: 2, sm: 0 },
                   }}
                 >
-                  <ListItemIcon sx={{ mt: 1 }}>
-                    <ScheduleIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 1,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <AccessTimeIcon sx={{ fontSize: 16 }} />
-                          <Typography
-                            variant="h6"
-                            component="span"
-                            sx={{ fontWeight: 600 }}
-                          >
-                            {formatTime(appointment.scheduledTime)} -{" "}
-                            {formatEndTime(appointment.scheduledTime)}
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={appointment.status}
-                          size="small"
-                          color={getStatusColor(appointment.status)}
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <Box sx={{ mt: 1 }}>
+                  <Box
+                    sx={{ display: "flex", alignItems: "flex-start", flex: 1 }}
+                  >
+                    <ListItemIcon sx={{ mt: 1, mr: 2 }}>
+                      <ScheduleIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
                         <Box
                           sx={{
                             display: "flex",
                             alignItems: "center",
                             gap: 1,
                             mb: 1,
+                            flexWrap: "wrap",
                           }}
                         >
-                          <PersonIcon sx={{ fontSize: 16 }} />
-                          <Typography variant="body2">
-                            {appointment.clientName}
-                          </Typography>
-                          {appointment.clientPlan && (
-                            <Chip
-                              label={`Plano ${appointment.clientPlan}`}
-                              size="small"
-                              variant="outlined"
-                              sx={{ ml: 1 }}
-                            />
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <AccessTimeIcon sx={{ fontSize: 16 }} />
+                            <Typography
+                              variant="h6"
+                              component="span"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {formatTime(appointment.scheduledTime)} -{" "}
+                              {formatEndTime(appointment.scheduledTime)}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={appointment.status}
+                            size="small"
+                            color={getStatusColor(appointment.status)}
+                          />
+                        </Box>
+                      }
+                      secondary={
+                        <Box sx={{ mt: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mb: 1,
+                            }}
+                          >
+                            <PersonIcon sx={{ fontSize: 16 }} />
+                            <Typography variant="body2">
+                              {appointment.clientName}
+                            </Typography>
+                            {appointment.clientPlan && (
+                              <Chip
+                                label={`Plano ${appointment.clientPlan}`}
+                                size="small"
+                                variant="outlined"
+                                sx={{ ml: 1 }}
+                              />
+                            )}
+                          </Box>
+                          {appointment.clientPhone && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <PhoneIcon sx={{ fontSize: 16 }} />
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {appointment.clientPhone}
+                              </Typography>
+                            </Box>
+                          )}
+                          {appointment?.selectedBarber?.name && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                mt: 1,
+                              }}
+                            >
+                              <WorkIcon sx={{ fontSize: 16 }} />
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {appointment?.selectedBarber?.name}
+                              </Typography>
+                            </Box>
                           )}
                         </Box>
-                        {appointment.clientPhone && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <PhoneIcon sx={{ fontSize: 16 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {appointment.clientPhone}
-                            </Typography>
-                          </Box>
-                        )}
-                        {appointment?.selectedBarber?.name && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              mt: 1,
-                            }}
-                          >
-                            <WorkIcon sx={{ fontSize: 16 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {appointment?.selectedBarber?.name}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    }
-                  />
+                      }
+                    />
+                  </Box>
+                  {user?.uid && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: { xs: "flex-start", sm: "center" },
+                        justifyContent: { xs: "flex-start", sm: "flex-end" },
+                        width: { xs: "100%", sm: "auto" },
+                        minWidth: { sm: "200px" },
+                      }}
+                    >
+                      <AppointmentActionButtons
+                        appointment={appointment}
+                        barberId={user.uid}
+                        onStatusUpdate={handleStatusUpdate}
+                      />
+                    </Box>
+                  )}
                 </ListItem>
                 {index < appointments.length - 1 && <Divider />}
               </React.Fragment>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ import {
   DialogActions,
   TextField,
   Snackbar,
+  InputAdornment,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -39,6 +40,8 @@ import {
   Delete as DeleteIcon,
   Phone as PhoneIcon,
   Link as LinkIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { Client } from "@/types/client";
@@ -62,8 +65,33 @@ export default function ClientsPage() {
   const [generatedLink, setGeneratedLink] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const { user } = useAuth();
   const { getPlanStyle, getPaymentStatusColor } = usePlans();
+
+  // Debounce para o termo de busca
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Filtro de clientes baseado no termo de busca
+  const filteredClients = useMemo(() => {
+    if (!debouncedSearchTerm.trim()) {
+      return clients;
+    }
+
+    const searchTermLower = debouncedSearchTerm.toLowerCase().trim();
+    return clients.filter(
+      (client) =>
+        client.name.toLowerCase().includes(searchTermLower) ||
+        client.phone.includes(debouncedSearchTerm.trim())
+    );
+  }, [clients, debouncedSearchTerm]);
 
   const loadClients = useCallback(async () => {
     try {
@@ -256,6 +284,34 @@ export default function ClientsPage() {
           gap: isMobile ? 2 : 0,
         }}
       >
+        <TextField
+          placeholder="Buscar por nome ou telefone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{
+            minWidth: isMobile ? "100%" : "300px",
+            maxWidth: isMobile ? "100%" : "400px",
+          }}
+          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() => setSearchTerm("")}
+                  edge="end"
+                >
+                  <ClearIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -272,11 +328,20 @@ export default function ClientsPage() {
         </Alert>
       )}
 
+      {/* Contador de resultados */}
+      {!loading && clients.length > 0 && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {debouncedSearchTerm
+            ? `${filteredClients.length} de ${clients.length} clientes encontrados`
+            : `${clients.length} clientes cadastrados`}
+        </Typography>
+      )}
+
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
           <CircularProgress />
         </Box>
-      ) : clients.length === 0 ? (
+      ) : filteredClients.length === 0 && clients.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: "center" }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Nenhum cliente cadastrado
@@ -293,8 +358,17 @@ export default function ClientsPage() {
             Cadastrar Primeiro Cliente
           </Button>
         </Paper>
+      ) : filteredClients.length === 0 && clients.length > 0 ? (
+        <Paper sx={{ p: 4, textAlign: "center" }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Nenhum cliente encontrado
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Tente alterar os termos da sua busca.
+          </Typography>
+        </Paper>
       ) : isMobile ? (
-        <Box>{clients.map(renderMobileClientCard)}</Box>
+        <Box>{filteredClients.map(renderMobileClientCard)}</Box>
       ) : (
         <TableContainer component={Paper}>
           <Table>
@@ -310,7 +384,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {clients.map((client) => {
+              {filteredClients.map((client) => {
                 const expiryStatus = getPlanExpiryStatus(client.planExpiryDate);
                 return (
                   <TableRow key={client.id} hover>

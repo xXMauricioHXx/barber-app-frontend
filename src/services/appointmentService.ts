@@ -6,6 +6,9 @@ import {
   where,
   orderBy,
   Timestamp,
+  doc,
+  updateDoc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Appointment, CreateAppointmentData } from "@/types/appointment";
@@ -189,6 +192,164 @@ export const appointmentService = {
     } catch (error) {
       console.error("Erro ao buscar estatísticas de agendamentos:", error);
       throw new Error("Erro ao carregar estatísticas. Tente novamente.");
+    }
+  },
+
+  async updateAppointmentStatus(
+    barberId: string,
+    appointmentId: string,
+    clientId: string,
+    newStatus: "Agendado" | "Confirmado" | "Concluído" | "Cancelado"
+  ): Promise<void> {
+    try {
+      const now = new Date();
+
+      // Atualizar no subcoleção do barbeiro
+      const barberAppointmentRef = doc(
+        db,
+        collectionSchema.barbers.name,
+        barberId,
+        collectionSchema.barbers.subCollections.appointments.name,
+        appointmentId
+      );
+
+      await updateDoc(barberAppointmentRef, {
+        status: newStatus,
+        updatedAt: now,
+      });
+
+      // Buscar agendamento na subcoleção do cliente para obter o ID correto
+      const clientAppointmentsQuery = query(
+        collection(
+          db,
+          collectionSchema.clients.name,
+          clientId,
+          collectionSchema.clients.subCollections.appointments.name
+        ),
+        where("id", "==", appointmentId)
+      );
+
+      const clientAppointmentsSnapshot = await getDocs(clientAppointmentsQuery);
+
+      if (!clientAppointmentsSnapshot.empty) {
+        const clientAppointmentDoc = clientAppointmentsSnapshot.docs[0];
+        await updateDoc(clientAppointmentDoc.ref, {
+          status: newStatus,
+          updatedAt: now,
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status do agendamento:", error);
+      throw new Error("Erro ao atualizar status. Tente novamente.");
+    }
+  },
+
+  async cancelAppointment(
+    barberId: string,
+    appointmentId: string,
+    clientId: string
+  ): Promise<void> {
+    return this.updateAppointmentStatus(
+      barberId,
+      appointmentId,
+      clientId,
+      "Cancelado"
+    );
+  },
+
+  async confirmAppointment(
+    barberId: string,
+    appointmentId: string,
+    clientId: string
+  ): Promise<void> {
+    return this.updateAppointmentStatus(
+      barberId,
+      appointmentId,
+      clientId,
+      "Confirmado"
+    );
+  },
+
+  async getAppointmentById(
+    barberId: string,
+    appointmentId: string
+  ): Promise<Appointment | null> {
+    try {
+      const appointmentRef = doc(
+        db,
+        collectionSchema.barbers.name,
+        barberId,
+        collectionSchema.barbers.subCollections.appointments.name,
+        appointmentId
+      );
+
+      const appointmentSnap = await getDoc(appointmentRef);
+
+      if (!appointmentSnap.exists()) {
+        return null;
+      }
+
+      const data = appointmentSnap.data();
+      return {
+        id: appointmentSnap.id,
+        ...data,
+        scheduledTime: data.scheduledTime?.toDate() || new Date(),
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+      } as Appointment;
+    } catch (error) {
+      console.error("Erro ao buscar agendamento:", error);
+      throw new Error("Erro ao carregar agendamento. Tente novamente.");
+    }
+  },
+
+  async cancelAppointmentByClient(
+    barberId: string,
+    appointmentId: string,
+    clientId: string
+  ): Promise<void> {
+    try {
+      // Verificar se o agendamento ainda pode ser cancelado
+      const appointment = await this.getAppointmentById(
+        barberId,
+        appointmentId
+      );
+
+      if (!appointment) {
+        throw new Error("Agendamento não encontrado");
+      }
+
+      if (appointment.clientId !== clientId) {
+        throw new Error(
+          "Você não tem permissão para cancelar este agendamento"
+        );
+      }
+
+      if (!["Agendado", "Confirmado"].includes(appointment.status)) {
+        throw new Error("Este agendamento não pode mais ser cancelado");
+      }
+
+      // Verificar se não é muito próximo do horário (ex: menos de 2 horas)
+      const now = new Date();
+      const appointmentTime = appointment.scheduledTime;
+      const hoursDifference =
+        (appointmentTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      if (hoursDifference < 2) {
+        throw new Error(
+          "Não é possível cancelar agendamentos com menos de 2 horas de antecedência"
+        );
+      }
+
+      return this.updateAppointmentStatus(
+        barberId,
+        appointmentId,
+        clientId,
+        "Cancelado"
+      );
+    } catch (error) {
+      console.error("Erro ao cancelar agendamento pelo cliente:", error);
+      throw error;
     }
   },
 };
