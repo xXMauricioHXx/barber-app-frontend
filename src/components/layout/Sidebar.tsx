@@ -14,9 +14,9 @@ import {
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
-  Group as GroupIcon,
   Schedule as ScheduleIcon,
   Settings as SettingsIcon,
+  AccountCircle as AccountCircleIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,7 +43,7 @@ const menuItems = [
   },
   {
     text: "Funcionários",
-    icon: <GroupIcon />,
+    icon: <AccountCircleIcon />,
     href: "/dashboard/employees",
   },
   {

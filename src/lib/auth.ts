@@ -1,7 +1,5 @@
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
@@ -29,25 +27,6 @@ export const signIn = async (
     const authError: AuthError = {
       code: firebaseError.code,
       message: getErrorMessage(firebaseError.code),
-    };
-    throw authError;
-  }
-};
-
-export const signInWithGoogle = async (): Promise<User> => {
-  try {
-    const provider = new GoogleAuthProvider();
-    // Adicionar escopo para obter informações básicas do perfil
-    provider.addScope("profile");
-    provider.addScope("email");
-
-    const userCredential = await signInWithPopup(auth, provider);
-    return userCredential.user;
-  } catch (error: unknown) {
-    const firebaseError = error as { code: string };
-    const authError: AuthError = {
-      code: firebaseError.code,
-      message: getGoogleErrorMessage(firebaseError.code),
     };
     throw authError;
   }

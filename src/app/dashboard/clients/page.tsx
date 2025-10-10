@@ -46,6 +46,8 @@ import { clientService } from "@/services/clientService";
 import { useAuth } from "@/context/AuthContext";
 import { Breadcrumbs } from "@/components";
 import usePlans, { PaymentStatus } from "@/hooks/usePlans";
+import { getPlanExpiryStatus } from "@/hooks/useClientEligibility";
+import { formatDate as formatDateUtil } from "@/lib/dateUtils";
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -161,63 +163,84 @@ export default function ClientsPage() {
     }).format(date);
   };
 
-  const renderMobileClientCard = (client: Client) => (
-    <Card key={client.id} sx={{ mb: 2 }}>
-      <CardContent>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 2,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Avatar sx={{ bgcolor: "primary.main" }}>
-              {client.name.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box>
-              <Typography variant="h6" component="div">
-                {client.name}
-              </Typography>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}
-              >
-                <PhoneIcon fontSize="small" color="action" />
-                <Typography variant="body2" color="text.secondary">
-                  {client.phone}
+  const renderMobileClientCard = (client: Client) => {
+    const expiryStatus = getPlanExpiryStatus(client.planExpiryDate);
+
+    return (
+      <Card key={client.id} sx={{ mb: 2 }}>
+        <CardContent>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Avatar sx={{ bgcolor: "primary.main" }}>
+                {client.name.charAt(0).toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography variant="h6" component="div">
+                  {client.name}
                 </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mt: 0.5,
+                  }}
+                >
+                  <PhoneIcon fontSize="small" color="action" />
+                  <Typography variant="body2" color="text.secondary">
+                    {client.phone}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
+            <IconButton size="small" onClick={(e) => handleMenuOpen(e, client)}>
+              <MoreVertIcon />
+            </IconButton>
           </Box>
-          <IconButton size="small" onClick={(e) => handleMenuOpen(e, client)}>
-            <MoreVertIcon />
-          </IconButton>
-        </Box>
 
-        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
-          <Chip
-            label={client.plan}
-            sx={getPlanStyle(client.plan)}
-            size="small"
-          />
-          <Chip
-            label={client.paymentStatus}
-            sx={{
-              backgroundColor: getPaymentStatusColor(
+          <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+            <Chip
+              label={client.plan}
+              sx={getPlanStyle(client.plan)}
+              size="small"
+            />
+            <Chip
+              label={client.paymentStatus}
+              color={getPaymentStatusColor(
                 client.paymentStatus as PaymentStatus
-              ),
-            }}
-            size="small"
-          />
-        </Box>
+              )}
+              size="small"
+            />
+            <Chip
+              label={expiryStatus.message}
+              color={
+                expiryStatus.status === "expired"
+                  ? "error"
+                  : expiryStatus.status === "warning"
+                  ? "warning"
+                  : "success"
+              }
+              size="small"
+            />
+          </Box>
 
-        <Typography variant="body2" color="text.secondary">
-          Cadastrado em: {formatDate(client.createdAt)}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
+          <Typography variant="body2" color="text.secondary">
+            Cadastrado em: {formatDate(client.createdAt)}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Plano vence em: {formatDateUtil(client.planExpiryDate)}
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <Box>
@@ -281,55 +304,81 @@ export default function ClientsPage() {
                 <TableCell>Telefone</TableCell>
                 <TableCell>Plano</TableCell>
                 <TableCell>Status Pagamento</TableCell>
+                <TableCell>Status do Plano</TableCell>
                 <TableCell>Data Cadastro</TableCell>
                 <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {clients.map((client) => (
-                <TableRow key={client.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
-                      {client.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <PhoneIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{client.phone}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={client.plan}
-                      sx={getPlanStyle(client.plan)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={client.paymentStatus}
-                      color={getPaymentStatusColor(
-                        client.paymentStatus as PaymentStatus
-                      )}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {formatDate(client.createdAt)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleMenuOpen(e, client)}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {clients.map((client) => {
+                const expiryStatus = getPlanExpiryStatus(client.planExpiryDate);
+                return (
+                  <TableRow key={client.id} hover>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight="medium">
+                        {client.name}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <PhoneIcon fontSize="small" color="action" />
+                        <Typography variant="body2">{client.phone}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={client.plan}
+                        sx={getPlanStyle(client.plan)}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={client.paymentStatus}
+                        color={getPaymentStatusColor(
+                          client.paymentStatus as PaymentStatus
+                        )}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={expiryStatus.message}
+                        color={
+                          expiryStatus.status === "expired"
+                            ? "error"
+                            : expiryStatus.status === "warning"
+                            ? "warning"
+                            : "success"
+                        }
+                        size="small"
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {formatDateUtil(client.planExpiryDate)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {formatDate(client.createdAt)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, client)}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

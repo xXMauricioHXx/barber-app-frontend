@@ -35,7 +35,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { format, isToday, isTomorrow, addDays } from "date-fns";
-import { getDocs } from "firebase/firestore";
 import { Client } from "@/types/client";
 import { Barber } from "@/types/barbers";
 import { Appointment } from "@/types/appointment";
@@ -46,6 +45,7 @@ import { employeeService } from "@/services/employeesService";
 import { Employee } from "@/types/employee";
 import usePlans, { PlanNames } from "@/hooks/usePlans";
 import { ServiceType } from "@/types/serviceType";
+import useClientEligibility from "@/hooks/useClientEligibility";
 
 const generateTimeSlots = () => {
   const slots = [];
@@ -82,6 +82,9 @@ export default function AppointmentPage() {
   );
   const [viewDate, setViewDate] = useState<Date | null>(new Date());
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+
+  // Hook para verificar elegibilidade do cliente
+  const clientEligibility = useClientEligibility(client);
 
   const router = useRouter();
   const resolvedParams = useParams();
@@ -240,6 +243,13 @@ export default function AppointmentPage() {
       return;
     }
 
+    // Verificar elegibilidade do cliente
+    if (!clientEligibility.canSchedule) {
+      const reasons = clientEligibility.reasonsBlocked.join(", ");
+      setError(`Não é possível realizar agendamento: ${reasons}`);
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError("");
@@ -381,6 +391,32 @@ export default function AppointmentPage() {
                   >
                     Estabelecimento: <strong>{barber?.name || "N/A"}</strong>
                   </Typography>
+
+                  {/* Alertas de elegibilidade */}
+                  {clientEligibility.warningMessage && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                      {clientEligibility.warningMessage}
+                    </Alert>
+                  )}
+
+                  {!clientEligibility.canSchedule && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      <Typography variant="body2" component="div">
+                        <strong>Agendamento bloqueado:</strong>
+                      </Typography>
+                      <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                        {clientEligibility.reasonsBlocked.map(
+                          (reason, index) => (
+                            <li key={index}>{reason}</li>
+                          )
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Entre em contato com o estabelecimento para regularizar
+                        sua situação.
+                      </Typography>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
 
@@ -489,7 +525,8 @@ export default function AppointmentPage() {
                       !selectedEmployee ||
                       !selectedDate ||
                       !selectedTime ||
-                      availableTimeSlots.length === 0
+                      availableTimeSlots.length === 0 ||
+                      !clientEligibility.canSchedule
                     }
                     sx={{ mt: 2 }}
                   >
@@ -498,6 +535,8 @@ export default function AppointmentPage() {
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Agendando...
                       </>
+                    ) : !clientEligibility.canSchedule ? (
+                      "Agendamento Bloqueado"
                     ) : (
                       "Confirmar Agendamento"
                     )}

@@ -13,16 +13,14 @@ import {
   CircularProgress,
   Container,
   Avatar,
-  Divider,
 } from "@mui/material";
-import { LockOutlined, Google } from "@mui/icons-material";
-import { signIn, signInWithGoogle, AuthError } from "@/lib/auth";
+import { LockOutlined } from "@mui/icons-material";
+import { signIn, AuthError } from "@/lib/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
@@ -50,21 +48,6 @@ export default function LoginPage() {
       setError(authError.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError("");
-
-    try {
-      await signInWithGoogle();
-      router.push("/dashboard");
-    } catch (error) {
-      const authError = error as AuthError;
-      setError(authError.message);
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -139,32 +122,13 @@ export default function LoginPage() {
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2, py: 1.5 }}
-                disabled={loading || googleLoading}
+                disabled={loading}
               >
                 {loading ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
                   "Entrar"
                 )}
-              </Button>
-
-              <Divider sx={{ my: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  ou
-                </Typography>
-              </Divider>
-
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={
-                  googleLoading ? <CircularProgress size={20} /> : <Google />
-                }
-                onClick={handleGoogleSignIn}
-                disabled={loading || googleLoading}
-                sx={{ py: 1.5, mb: 2 }}
-              >
-                {googleLoading ? "Entrando..." : "Continuar com Google"}
               </Button>
             </Box>
           </CardContent>

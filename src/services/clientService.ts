@@ -8,8 +8,6 @@ import {
   deleteDoc,
   query,
   orderBy,
-  where,
-  collectionGroup,
   setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -74,6 +72,7 @@ export const clientService = {
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+        planExpiryDate: doc.data().planExpiryDate?.toDate() || new Date(),
       })) as Client[];
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
@@ -105,6 +104,7 @@ export const clientService = {
         ...data,
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
+        planExpiryDate: data.planExpiryDate?.toDate() || new Date(),
       } as Client;
     } catch (error) {
       console.error("Erro ao buscar cliente:", error);
