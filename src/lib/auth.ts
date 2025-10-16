@@ -63,22 +63,3 @@ const getErrorMessage = (errorCode: string): string => {
       return "Erro ao fazer login. Tente novamente.";
   }
 };
-
-const getGoogleErrorMessage = (errorCode: string): string => {
-  switch (errorCode) {
-    case "auth/popup-closed-by-user":
-      return "Login cancelado pelo usuário.";
-    case "auth/popup-blocked":
-      return "Pop-up bloqueado pelo navegador. Permita pop-ups e tente novamente.";
-    case "auth/cancelled-popup-request":
-      return "Solicitação de login cancelada.";
-    case "auth/account-exists-with-different-credential":
-      return "Já existe uma conta com este e-mail usando um método de login diferente.";
-    case "auth/user-disabled":
-      return "Conta desabilitada.";
-    case "auth/operation-not-allowed":
-      return "Login com Google não está habilitado.";
-    default:
-      return "Erro ao fazer login com Google. Tente novamente.";
-  }
-};

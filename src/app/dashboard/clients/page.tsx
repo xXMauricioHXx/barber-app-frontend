@@ -89,7 +89,8 @@ export default function ClientsPage() {
     return clients.filter(
       (client) =>
         client.name.toLowerCase().includes(searchTermLower) ||
-        client.phone.includes(debouncedSearchTerm.trim())
+        client.phone.includes(debouncedSearchTerm.trim()) ||
+        (client.email && client.email.toLowerCase().includes(searchTermLower))
     );
   }, [clients, debouncedSearchTerm]);
 
@@ -226,6 +227,15 @@ export default function ClientsPage() {
                     {client.phone}
                   </Typography>
                 </Box>
+                {client.email && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    {client.email}
+                  </Typography>
+                )}
               </Box>
             </Box>
             <IconButton size="small" onClick={(e) => handleMenuOpen(e, client)}>
@@ -376,6 +386,7 @@ export default function ClientsPage() {
               <TableRow>
                 <TableCell>Nome</TableCell>
                 <TableCell>Telefone</TableCell>
+                <TableCell>Email</TableCell>
                 <TableCell>Plano</TableCell>
                 <TableCell>Status Pagamento</TableCell>
                 <TableCell>Status do Plano</TableCell>
@@ -400,6 +411,11 @@ export default function ClientsPage() {
                         <PhoneIcon fontSize="small" color="action" />
                         <Typography variant="body2">{client.phone}</Typography>
                       </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {client.email || "-"}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip

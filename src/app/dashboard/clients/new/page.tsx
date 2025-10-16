@@ -43,6 +43,7 @@ export default function NewClientPage() {
   const [formData, setFormData] = useState<CreateClientData>({
     name: "",
     phone: "",
+    email: "",
     plan: defaultPlan.name,
     paymentStatus: defaultPlanStatus,
     planExpiryDate: calculatePlanExpiryDate(defaultPlan.name),
@@ -51,12 +52,14 @@ export default function NewClientPage() {
   const [errors, setErrors] = useState({
     name: "",
     phone: "",
+    email: "",
   });
 
   const validateForm = (): boolean => {
     const newErrors = {
       name: "",
       phone: "",
+      email: "",
     };
 
     if (!formData.name.trim()) {
@@ -69,8 +72,15 @@ export default function NewClientPage() {
       newErrors.phone = "Formato de telefone inválido";
     }
 
+    if (formData.email && formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Formato de email inválido";
+      }
+    }
+
     setErrors(newErrors);
-    return !newErrors.name && !newErrors.phone;
+    return !newErrors.name && !newErrors.phone && !newErrors.email;
   };
 
   const handleInputChange = (
@@ -125,6 +135,7 @@ export default function NewClientPage() {
       });
     } finally {
       setLoading(false);
+      router.push("/dashboard/clients");
     }
   };
 
@@ -165,6 +176,18 @@ export default function NewClientPage() {
                   helperText={errors.phone}
                   placeholder="(11) 99999-9999"
                   required
+                  disabled={loading}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  placeholder="cliente@exemplo.com"
                   disabled={loading}
                 />
 

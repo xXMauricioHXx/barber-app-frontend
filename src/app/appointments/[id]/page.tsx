@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -28,6 +28,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import {
   Event as EventIcon,
@@ -35,6 +37,7 @@ import {
   Person as PersonIcon,
   ContentCut as ServiceIcon,
   Cancel as CancelIcon,
+  CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -66,6 +69,8 @@ export default function AppointmentPage() {
   const [existingAppointments, setExistingAppointments] = useState<
     Appointment[]
   >([]);
+  const [shouldListCanceledAppointments, setShouldListCanceledAppointments] =
+    useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
@@ -89,6 +94,7 @@ export default function AppointmentPage() {
 
   // Hook para verificar elegibilidade do cliente
   const clientEligibility = useClientEligibility(client);
+  const router = useRouter();
 
   const resolvedParams = useParams();
   const ids = resolvedParams?.id as string;
@@ -114,6 +120,10 @@ export default function AppointmentPage() {
       });
     }
 
+    if (!shouldListCanceledAppointments) {
+      filtered = filtered.filter((apt) => apt.status !== "Cancelado");
+    }
+
     // Ordenar por data e hora (mais recente primeiro para agendamentos passados,
     // mais próximo primeiro para agendamentos futuros)
     return filtered.sort((a, b) => {
@@ -135,7 +145,12 @@ export default function AppointmentPage() {
         return 1;
       }
     });
-  }, [clientAppointments, viewDate, showAllAppointments]);
+  }, [
+    clientAppointments,
+    viewDate,
+    showAllAppointments,
+    shouldListCanceledAppointments,
+  ]);
 
   const serviceType = useMemo(() => {
     if (!client) return null;
@@ -488,6 +503,22 @@ export default function AppointmentPage() {
                     Estabelecimento: <strong>{barber?.name || "N/A"}</strong>
                   </Typography>
 
+                  {/* Botão para gerenciar método de pagamento */}
+                  <Box sx={{ mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<CreditCardIcon />}
+                      onClick={() =>
+                        router.push(`/appointments/${ids}/payment`)
+                      }
+                      size="small"
+                      color="primary"
+                    >
+                      {client.stripeCustomerId ? "Gerenciar" : "Adicionar"}{" "}
+                      Método de Pagamento
+                    </Button>
+                  </Box>
+
                   {/* Alertas de elegibilidade */}
                   {clientEligibility.warningMessage && (
                     <Alert severity="warning" sx={{ mt: 2 }}>
@@ -584,18 +615,7 @@ export default function AppointmentPage() {
                       <InputLabel id="time-select-label">
                         Escolha o Horário
                       </InputLabel>
-                      <Select
-                        labelId="time-select-label"
-                        value={selectedTime}
-                        label="Escolha o Horário"
-                        onChange={(e) => setSelectedTime(e.target.value)}
-                      >
-                        {availableTimeSlots.map((time: string) => (
-                          <MenuItem key={time} value={time}>
-                            {time}
-                          </MenuItem>
-                        ))}
-                      </Select>
+
                       {selectedDate &&
                         selectedEmployee &&
                         availableTimeSlots.length === 0 && (
@@ -713,6 +733,19 @@ export default function AppointmentPage() {
                             //sx: { minWidth: 200 },
                           },
                         }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={shouldListCanceledAppointments}
+                            onChange={(e) =>
+                              setShouldListCanceledAppointments(
+                                e.target.checked
+                              )
+                            }
+                          />
+                        }
+                        label="Mostrar Agendamentos Cancelados"
                       />
                     </Box>
 

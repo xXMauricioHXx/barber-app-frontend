@@ -1,4 +1,4 @@
-import { PlanNames } from "@/hooks/usePlans";
+import { PlanNames } from "../hooks/usePlans";
 import { Employee } from "./employee";
 import { ServiceType } from "./serviceType";
 

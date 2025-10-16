@@ -20,6 +20,7 @@ import {
   Radio,
   Button,
   ButtonGroup,
+  Checkbox,
 } from "@mui/material";
 import {
   Schedule as ScheduleIcon,
@@ -62,6 +63,8 @@ export default function AppointmentsPage() {
   // Estados locais para filtros e visualização
   const [viewMode, setViewMode] = useState<"today" | "date" | "all">("today");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [shouldListCanceledAppointments, setShouldListCanceledAppointments] =
+    useState<boolean>(false);
 
   // Carrega agendamentos baseado no modo de visualização
   useEffect(() => {
@@ -93,13 +96,17 @@ export default function AppointmentsPage() {
 
   // Filtra agendamentos por status quando necessário
   const filteredAppointments = useMemo(() => {
+    const appointmentsWithoutCanceled = shouldListCanceledAppointments
+      ? appointments
+      : appointments.filter((apt) => apt.status !== "Cancelado");
+
     if (statusFilter === "all") {
-      return appointments;
+      return appointmentsWithoutCanceled;
     }
-    return appointments.filter(
+    return appointmentsWithoutCanceled.filter(
       (appointment) => appointment.status === statusFilter
     );
-  }, [appointments, statusFilter]);
+  }, [appointments, statusFilter, shouldListCanceledAppointments]);
 
   // Agrupa agendamentos por data quando exibindo todos
   const groupedAppointments = useMemo(() => {
@@ -348,12 +355,23 @@ export default function AppointmentsPage() {
                   control={<Radio />}
                   label="Concluído"
                 />
-                <FormControlLabel
+                {/* <FormControlLabel
                   value="Cancelado"
                   control={<Radio />}
                   label="Cancelado"
-                />
+                /> */}
               </RadioGroup>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={shouldListCanceledAppointments}
+                    onChange={(e) =>
+                      setShouldListCanceledAppointments(e.target.checked)
+                    }
+                  />
+                }
+                label="Mostrar Agendamentos Cancelados"
+              />
             </FormControl>
           </Box>
         </Paper>

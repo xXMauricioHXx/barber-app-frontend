@@ -118,17 +118,25 @@ export const clientService = {
     data: Partial<CreateClientData>
   ): Promise<void> {
     try {
-      const clientRef = doc(
+      const barberClientRef = doc(
         db,
         collectionSchema.barbers.name,
         barberId,
         collectionSchema.barbers.subCollections.clients.name,
         id
       );
-      await updateDoc(clientRef, {
+
+      const clientRef = doc(db, collectionSchema.clients.name, id);
+
+      const updateData = {
         ...data,
         updatedAt: new Date(),
-      });
+      };
+
+      await Promise.all([
+        updateDoc(barberClientRef, updateData),
+        updateDoc(clientRef, updateData),
+      ]);
     } catch (error) {
       console.error("Erro ao atualizar cliente:", error);
       throw new Error("Erro ao atualizar cliente. Tente novamente.");

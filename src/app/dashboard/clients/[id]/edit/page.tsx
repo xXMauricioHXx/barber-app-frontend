@@ -22,7 +22,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
-import { CreateClientData, Client } from "@/types/client";
+import { CreateClientData } from "@/types/client";
 import { clientService } from "@/services/clientService";
 import { useAuth } from "@/context/AuthContext";
 import { Custom404, Breadcrumbs } from "@/components";
@@ -37,7 +37,6 @@ export default function EditClientPage() {
 
   const clientId = params.id as string;
 
-  const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clientNotFound, setClientNotFound] = useState(false);
@@ -50,6 +49,7 @@ export default function EditClientPage() {
   const [formData, setFormData] = useState<CreateClientData>({
     name: "",
     phone: "",
+    email: "",
     plan: defaultPlan.name,
     paymentStatus: defaultPlanStatus,
     planExpiryDate: calculatePlanExpiryDate(defaultPlan.name),
@@ -58,6 +58,7 @@ export default function EditClientPage() {
   const [errors, setErrors] = useState({
     name: "",
     phone: "",
+    email: "",
   });
 
   useEffect(() => {
@@ -74,10 +75,10 @@ export default function EditClientPage() {
           return;
         }
 
-        setClient(clientData);
         setFormData({
           name: clientData.name,
           phone: clientData.phone,
+          email: clientData.email || "",
           plan: clientData.plan,
           paymentStatus: clientData.paymentStatus,
           planExpiryDate:
@@ -118,6 +119,7 @@ export default function EditClientPage() {
     const newErrors = {
       name: "",
       phone: "",
+      email: "",
     };
 
     if (!formData.name.trim()) {
@@ -130,8 +132,15 @@ export default function EditClientPage() {
       newErrors.phone = "Formato de telefone inválido";
     }
 
+    if (formData.email && formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Formato de email inválido";
+      }
+    }
+
     setErrors(newErrors);
-    return !newErrors.name && !newErrors.phone;
+    return !newErrors.name && !newErrors.phone && !newErrors.email;
   };
 
   const handleInputChange = (
@@ -244,6 +253,20 @@ export default function EditClientPage() {
                       helperText={errors.phone}
                       placeholder="(11) 99999-9999"
                       required
+                      disabled={saving}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
+                      error={!!errors.email}
+                      helperText={errors.email}
+                      placeholder="cliente@exemplo.com"
                       disabled={saving}
                     />
 
