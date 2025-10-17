@@ -4,11 +4,13 @@ import { Appointment } from "./appointment";
 export interface Client {
   id?: string;
   name: string;
+  nickname?: string;
+  birthDate?: Date;
   phone: string;
   email?: string;
-  plan: PlanNames;
+  plan?: PlanNames;
   paymentStatus: string;
-  planExpiryDate: Date;
+  planExpiryDate?: Date;
   createdAt: Date;
   updatedAt: Date;
   appointments?: Appointment[];
@@ -19,9 +21,21 @@ export interface Client {
 
 export interface CreateClientData {
   name: string;
+  nickname?: string;
+  birthDate?: Date;
   phone: string;
   email?: string;
-  plan: PlanNames;
-  paymentStatus: string;
-  planExpiryDate: Date;
+  plan?: PlanNames;
+  paymentStatus?: string;
+  planExpiryDate?: Date;
+}
+
+export interface ClientRegistrationData {
+  name: string;
+  nickname: string;
+  birthDate: Date | null;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
 }

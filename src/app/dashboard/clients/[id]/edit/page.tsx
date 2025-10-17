@@ -79,11 +79,11 @@ export default function EditClientPage() {
           name: clientData.name,
           phone: clientData.phone,
           email: clientData.email || "",
-          plan: clientData.plan,
+          plan: clientData.plan!,
           paymentStatus: clientData.paymentStatus,
           planExpiryDate:
             clientData.planExpiryDate ||
-            calculatePlanExpiryDate(clientData.plan),
+            calculatePlanExpiryDate(clientData.plan!),
         });
       } catch (error) {
         setSnackbar({

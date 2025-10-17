@@ -116,7 +116,7 @@ export default function ClientsPage() {
   }, [user?.uid, loadClients]);
 
   const handleNewClient = () => {
-    router.push("/dashboard/clients/new");
+    router.push("/dashboard/client/new");
   };
 
   const handleMenuOpen = (
@@ -193,7 +193,8 @@ export default function ClientsPage() {
   };
 
   const renderMobileClientCard = (client: Client) => {
-    const expiryStatus = getPlanExpiryStatus(client.planExpiryDate);
+    const expiryStatus =
+      client.planExpiryDate && getPlanExpiryStatus(client.planExpiryDate);
 
     return (
       <Card key={client.id} sx={{ mb: 2 }}>
@@ -257,11 +258,11 @@ export default function ClientsPage() {
               size="small"
             />
             <Chip
-              label={expiryStatus.message}
+              label={expiryStatus?.message}
               color={
-                expiryStatus.status === "expired"
+                expiryStatus?.status === "expired"
                   ? "error"
-                  : expiryStatus.status === "warning"
+                  : expiryStatus?.status === "warning"
                   ? "warning"
                   : "success"
               }
@@ -273,7 +274,10 @@ export default function ClientsPage() {
             Cadastrado em: {formatDate(client.createdAt)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Plano vence em: {formatDateUtil(client.planExpiryDate)}
+            Plano vence em:{" "}
+            {client.planExpiryDate
+              ? formatDateUtil(client.planExpiryDate)
+              : " - "}
           </Typography>
         </CardContent>
       </Card>
@@ -396,7 +400,9 @@ export default function ClientsPage() {
             </TableHead>
             <TableBody>
               {filteredClients.map((client) => {
-                const expiryStatus = getPlanExpiryStatus(client.planExpiryDate);
+                const expiryStatus =
+                  client.planExpiryDate &&
+                  getPlanExpiryStatus(client.planExpiryDate);
                 return (
                   <TableRow key={client.id} hover>
                     <TableCell>
@@ -435,11 +441,11 @@ export default function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={expiryStatus.message}
+                        label={expiryStatus?.message}
                         color={
-                          expiryStatus.status === "expired"
+                          expiryStatus?.status === "expired"
                             ? "error"
-                            : expiryStatus.status === "warning"
+                            : expiryStatus?.status === "warning"
                             ? "warning"
                             : "success"
                         }
@@ -450,7 +456,9 @@ export default function ClientsPage() {
                         color="text.secondary"
                         sx={{ mt: 0.5 }}
                       >
-                        {formatDateUtil(client.planExpiryDate)}
+                        {client.planExpiryDate
+                          ? formatDateUtil(client.planExpiryDate)
+                          : " - "}
                       </Typography>
                     </TableCell>
                     <TableCell>

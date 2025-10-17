@@ -11,9 +11,15 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Client, CreateClientData } from "@/types/client";
+import {
+  Client,
+  ClientRegistrationData,
+  CreateClientData,
+} from "@/types/client";
 import { collectionSchema } from "./collection";
 import { Appointment } from "@/types/appointment";
+import { PlanNames } from "@/hooks/usePlans";
+import { signUp } from "@/lib/auth";
 
 export const clientService = {
   async createClient(
@@ -192,6 +198,55 @@ export const clientService = {
       throw new Error(
         "Erro ao carregar agendamentos do cliente. Tente novamente."
       );
+    }
+  },
+
+  async getById(id: string): Promise<Client | null> {
+    try {
+      const clientRef = doc(db, collectionSchema.clients.name, id);
+      const clientDoc = await getDoc(clientRef);
+
+      if (!clientDoc.exists()) {
+        return null;
+      }
+
+      const data = clientDoc.data();
+      return {
+        id: clientDoc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+        planExpiryDate: data.planExpiryDate?.toDate() || undefined,
+      } as Client;
+    } catch (error) {
+      console.error("Erro ao buscar cliente:", error);
+      throw new Error("Erro ao carregar cliente. Tente novamente.");
+    }
+  },
+
+  async create(data: ClientRegistrationData): Promise<string> {
+    try {
+      const user = await signUp(data.email!, data.password);
+
+      const clientData = {
+        name: data.name.trim(),
+        nickname: data?.nickname?.trim(),
+        birthDate: data?.birthDate,
+        email: data?.email?.trim(),
+        phone: data?.phone?.trim(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: PlanNames.NOT_SELECTED,
+        paymentStatus: null,
+        planExpiryDate: null,
+      };
+
+      await setDoc(doc(db, "clients", user.uid), clientData);
+
+      return user.uid;
+    } catch (error) {
+      console.error("Erro ao criar cliente:", error);
+      throw new Error("Erro ao criar cliente. Tente novamente.");
     }
   },
 };

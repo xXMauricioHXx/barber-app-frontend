@@ -8,6 +8,7 @@ export enum PlanNames {
   BASIC = "Básico",
   PREMIUM = "Premium",
   PREMIUM_PLUS = "Premium+",
+  NOT_SELECTED = "Não Selecionado",
 }
 
 export enum PaymentStatus {
@@ -37,7 +38,7 @@ function usePlans() {
     }
   };
 
-  const getPlanStyle = (plan: string) => {
+  const getPlanStyle = (plan?: string) => {
     switch (plan) {
       case PlanNames.BASIC:
         return { backgroundColor: "#01BAD1", color: "#fff" };

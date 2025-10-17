@@ -28,7 +28,9 @@ export function useClientEligibility(client: Client | null): ClientEligibility {
     }
 
     const today = new Date();
-    const expiryDate = new Date(client.planExpiryDate);
+    const expiryDate = client.planExpiryDate
+      ? new Date(client.planExpiryDate)
+      : new Date();
     const isExpired = isBefore(expiryDate, today);
     const isPaymentLate = client.paymentStatus === PaymentStatus.LATE;
     const daysUntilExpiry = differenceInDays(expiryDate, today);
@@ -80,7 +82,9 @@ export function calculatePlanExpiryDate(
  */
 export function isClientEligibleForBooking(client: Client): boolean {
   const today = new Date();
-  const expiryDate = new Date(client.planExpiryDate);
+  const expiryDate = client.planExpiryDate
+    ? new Date(client.planExpiryDate)
+    : new Date();
 
   // Verifica se o plano não está vencido
   const isNotExpired = isAfter(expiryDate, today);
