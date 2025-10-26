@@ -34,27 +34,27 @@ const menuItems = [
   {
     text: "Dashboard",
     icon: <DashboardIcon />,
-    href: "/dashboard",
+    href: "/barber",
   },
   {
     text: "Clientes",
     icon: <PeopleIcon />,
-    href: "/dashboard/clients",
+    href: "/barber/clients",
   },
   {
     text: "Colaboradores",
     icon: <AccountCircleIcon />,
-    href: "/dashboard/employees",
+    href: "/barber/employees",
   },
   {
     text: "Agenda",
     icon: <ScheduleIcon />,
-    href: "/dashboard/appointments",
+    href: "/barber/appointments",
   },
   {
     text: "Configurações",
     icon: <SettingsIcon />,
-    href: "/dashboard/settings",
+    href: "/barber/settings",
   },
 ];
 

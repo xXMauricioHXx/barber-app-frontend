@@ -73,7 +73,7 @@ export default function EmployeesPage() {
   }, [user?.uid, loadEmployees]);
 
   const handleNewEmployee = () => {
-    router.push("/dashboard/employees/new");
+    router.push("/barber/employees/new");
   };
 
   const handleMenuOpen = (
@@ -91,7 +91,7 @@ export default function EmployeesPage() {
 
   const handleEditEmployee = () => {
     if (selectedEmployee) {
-      router.push(`/dashboard/employees/${selectedEmployee.id}/edit`);
+      router.push(`/barber/employees/${selectedEmployee.id}/edit`);
     }
     handleMenuClose();
   };

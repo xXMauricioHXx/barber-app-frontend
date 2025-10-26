@@ -17,7 +17,7 @@ export default function Custom404({
   message = "Parece que você tentou acessar uma página que não existe. Que tal voltarmos ao seu salão?",
   showBackButton = true,
   backLink,
-  homeLink = "/dashboard",
+  homeLink = "/barber",
 }: Custom404Props) {
   const handleGoBack = () => {
     if (backLink) {

@@ -42,7 +42,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push("/dashboard");
+      router.push("/barber");
     } catch (error) {
       const authError = error as AuthError;
       setError(authError.message);

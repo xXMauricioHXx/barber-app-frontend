@@ -135,12 +135,12 @@ export default function NewClientPage() {
       });
     } finally {
       setLoading(false);
-      router.push("/dashboard/clients");
+      router.push("/barber/clients");
     }
   };
 
   const handleCancel = () => {
-    router.push("/dashboard/clients");
+    router.push("/barber/clients");
   };
 
   const handleCloseSnackbar = () => {

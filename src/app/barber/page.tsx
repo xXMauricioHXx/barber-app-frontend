@@ -11,7 +11,7 @@ import {
 import React, { useEffect } from "react";
 import { barberService } from "@/services/barberService";
 
-export default function DashboardPage() {
+export default function BarberPage() {
   const { user } = useAuth();
   const { refreshStats } = useAppointments();
   const [barber, setBarber] = React.useState<{ name: string } | null>(null);

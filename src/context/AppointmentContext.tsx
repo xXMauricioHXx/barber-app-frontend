@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  use,
+} from "react";
 import { Appointment } from "@/types/appointment";
 import { appointmentService } from "@/services/appointmentService";
 

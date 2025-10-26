@@ -16,33 +16,34 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
   const breadcrumbs = useMemo(() => {
     // Mapeamento de rotas para labels amigáveis
     const routeLabels: Record<string, string> = {
-      "/dashboard": "Dashboard",
-      "/dashboard/appointments": "Agenda",
-      "/dashboard/clients": "Clientes",
-      "/dashboard/clients/new": "Novo Cliente",
-      "/dashboard/clients/[id]/edit": "Editar Cliente",
-      "/dashboard/employees": "Colaboradores",
-      "/dashboard/employees/new": "Novo Colaborador",
-      "/dashboard/employees/[id]/edit": "Editar Colaborador",
-      "/dashboard/settings": "Configurações",
+      "/barber": "Dashboard",
+      "/barber/appointments": "Agenda",
+      "/barber/clients": "Clientes",
+      "/barber/clients/new": "Novo Cliente",
+      "/barber/clients/[id]/edit": "Editar Cliente",
+      "/barber/employees": "Colaboradores",
+      "/barber/employees/new": "Novo Colaborador",
+      "/barber/employees/[id]/edit": "Editar Colaborador",
+      "/barber/settings": "Configurações",
     };
-
+    console.log("Pathname:", pathname);
     // Divide o pathname em segmentos
     const segments = pathname.split("/").filter(Boolean);
     const items: BreadcrumbItem[] = [];
 
     // Sempre adiciona o Dashboard como primeiro item se estivermos dentro dele
-    if (segments[0] === "dashboard") {
+    if (segments[0] === "barber") {
       let currentPath = "";
 
       segments.forEach((segment, index) => {
         currentPath += `/${segment}`;
+        console.log("Current Path:", currentPath);
 
         let label = routeLabels[currentPath];
 
         // Se não encontrar label específico, tenta com padrão genérico
         if (!label) {
-          // Para rotas dinâmicas como /dashboard/clients/[id]/edit
+          // Para rotas dinâmicas como /barber/clients/[id]/edit
           const genericPath = currentPath.replace(
             /\/[^/]+\/edit$/,
             "/[id]/edit"

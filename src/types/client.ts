@@ -17,6 +17,7 @@ export interface Client {
   stripeCustomerId?: string;
   paymentMethodBrand?: string;
   paymentMethodLast4?: string;
+  selectedBarbersId?: string[];
 }
 
 export interface CreateClientData {

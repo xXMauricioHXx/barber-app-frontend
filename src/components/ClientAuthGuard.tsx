@@ -15,7 +15,7 @@ export default function ClientAuthGuard({ children }: ClientAuthGuardProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/client/login");
+      router.push("/user/login");
     }
   }, [user, loading, router]);
 

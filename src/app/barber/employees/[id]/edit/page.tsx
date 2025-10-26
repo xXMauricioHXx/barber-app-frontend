@@ -75,7 +75,7 @@ export default function EditEmployeePage() {
               : "Erro ao carregar colaborador",
           severity: "error",
         });
-        router.push("/dashboard/employees");
+        router.push("/barber/employees");
       } finally {
         setLoading(false);
       }
@@ -92,8 +92,8 @@ export default function EditEmployeePage() {
       <Custom404
         title="Colaborador não encontrado"
         message="O colaborador que você está procurando não existe ou foi removido do sistema. Verifique se o ID está correto ou volte para a lista de colaboradores."
-        homeLink="/dashboard/employees"
-        backLink="/dashboard/employees"
+        homeLink="/barber/employees"
+        backLink="/barber/employees"
       />
     );
   }
@@ -164,7 +164,7 @@ export default function EditEmployeePage() {
   };
 
   const handleCancel = () => {
-    router.push("/dashboard/employees");
+    router.push("/barber/employees");
   };
 
   const handleCloseSnackbar = () => {

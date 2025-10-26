@@ -20,12 +20,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
-import { signUp, AuthError } from "@/lib/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { PlanNames } from "@/hooks/usePlans";
+import { AuthError } from "@/lib/auth";
 import { clientService } from "@/services/clientService";
 import { ClientRegistrationData } from "@/types/client";
+import { stripeService } from "@/server/services/stripe";
 
 export default function ClientRegistrationPage() {
   const [formData, setFormData] = useState<ClientRegistrationData>({
@@ -117,9 +115,17 @@ export default function ClientRegistrationPage() {
     setError("");
 
     try {
-      await clientService.create(formData as ClientRegistrationData);
+      const customer = await stripeService.createCustomer(
+        formData.email!,
+        formData.name
+      );
+      await clientService.create(
+        formData as ClientRegistrationData,
+        customer.id
+      );
+      console.log("Cliente registrado com sucesso!");
 
-      router.push("/client/dashboard");
+      router.push("/client/barber");
     } catch (error) {
       const authError = error as AuthError;
       setError(authError.message);
@@ -269,7 +275,7 @@ export default function ClientRegistrationPage() {
                 <Box sx={{ textAlign: "center", mt: 2 }}>
                   <Typography variant="body2" color="text.secondary">
                     Já tem uma conta?{" "}
-                    <Link href="/client/login" style={{ color: "inherit" }}>
+                    <Link href="/user/login" style={{ color: "inherit" }}>
                       Faça login aqui
                     </Link>
                   </Typography>

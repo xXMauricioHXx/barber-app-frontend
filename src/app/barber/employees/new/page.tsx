@@ -52,7 +52,7 @@ export default function NewEmployeePage() {
         name: formData.name.trim(),
       });
 
-      router.push("/dashboard/employees");
+      router.push("/barber/employees");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erro ao criar colaborador"
@@ -63,7 +63,7 @@ export default function NewEmployeePage() {
   };
 
   const handleCancel = () => {
-    router.push("/dashboard/employees");
+    router.push("/barber/employees");
   };
 
   return (

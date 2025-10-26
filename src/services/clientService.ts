@@ -224,7 +224,26 @@ export const clientService = {
     }
   },
 
-  async create(data: ClientRegistrationData): Promise<string> {
+  async updateClientById(
+    clientId: string,
+    data: Partial<Client>
+  ): Promise<void> {
+    try {
+      const clientRef = doc(db, collectionSchema.clients.name, clientId);
+      await updateDoc(clientRef, {
+        ...data,
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar cliente:", error);
+      throw new Error("Erro ao atualizar cliente. Tente novamente.");
+    }
+  },
+
+  async create(
+    data: ClientRegistrationData,
+    stripeId?: string
+  ): Promise<string> {
     try {
       const user = await signUp(data.email!, data.password);
 
@@ -239,6 +258,7 @@ export const clientService = {
         plan: PlanNames.NOT_SELECTED,
         paymentStatus: null,
         planExpiryDate: null,
+        stripeCustomerId: stripeId || null,
       };
 
       await setDoc(doc(db, "clients", user.uid), clientData);

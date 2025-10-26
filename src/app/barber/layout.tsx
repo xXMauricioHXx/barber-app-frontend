@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
-import AuthGuard from "@/components/AuthGuard";
+import BarberAuthGuard from "@/components/BarberAuthGuard";
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import { AppointmentProvider } from "@/context/AppointmentContext";
 
-export default function DashboardLayout({
+export default function BarberLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -31,7 +31,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <AuthGuard>
+    <BarberAuthGuard>
       <AppointmentProvider>
         <Box sx={{ display: "flex" }}>
           <CssBaseline />
@@ -64,6 +64,6 @@ export default function DashboardLayout({
           </Box>
         </Box>
       </AppointmentProvider>
-    </AuthGuard>
+    </BarberAuthGuard>
   );
 }

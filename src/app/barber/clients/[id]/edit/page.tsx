@@ -92,7 +92,7 @@ export default function EditClientPage() {
             error instanceof Error ? error.message : "Erro ao carregar cliente",
           severity: "error",
         });
-        router.push("/dashboard/clients");
+        router.push("/barber/clients");
       } finally {
         setLoading(false);
       }
@@ -109,8 +109,8 @@ export default function EditClientPage() {
       <Custom404
         title="Cliente não encontrado"
         message="O cliente que você está procurando não existe ou foi removido do sistema. Verifique se o ID está correto ou volte para a lista de clientes."
-        homeLink="/dashboard/clients"
-        backLink="/dashboard/clients"
+        homeLink="/barber/clients"
+        backLink="/barber/clients"
       />
     );
   }
@@ -199,7 +199,7 @@ export default function EditClientPage() {
   };
 
   const handleCancel = () => {
-    router.push("/dashboard/clients");
+    router.push("/barber/clients");
   };
 
   const handleCloseSnackbar = () => {

@@ -116,7 +116,7 @@ export default function ClientsPage() {
   }, [user?.uid, loadClients]);
 
   const handleNewClient = () => {
-    router.push("/dashboard/client/new");
+    router.push("/barber/client/new");
   };
 
   const handleMenuOpen = (
@@ -134,7 +134,7 @@ export default function ClientsPage() {
 
   const handleEditClient = () => {
     if (selectedClient) {
-      router.push(`/dashboard/clients/${selectedClient.id}/edit`);
+      router.push(`/barber/clients/${selectedClient.id}/edit`);
     }
     handleMenuClose();
   };
