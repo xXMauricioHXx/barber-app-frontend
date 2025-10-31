@@ -48,7 +48,10 @@ export const stripeService = {
       priceId = process.env.NEXT_PUBLIC_PRODUCT_PRICE_PREMIUM_PLUS_ID || "";
     }
 
+    const baseUrl =
+      process.env.NEXT_PUBLIC_WEBHOOK_BASE_URL || "http://localhost:3000";
     const customer = await stripeService.getCustomerByEmail(email);
+
     return await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "subscription",
@@ -58,9 +61,8 @@ export const stripeService = {
         barberId,
       },
       client_reference_id: internalClientId,
-      success_url:
-        "https://barberapp.com/success?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://barberapp.com/cancel",
+      success_url: baseUrl,
+      cancel_url: baseUrl,
       line_items: [
         {
           price: priceId,

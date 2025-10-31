@@ -39,6 +39,7 @@ function usePlans() {
   };
 
   const getPlanStyle = (plan?: string) => {
+    console.log(plan);
     switch (plan) {
       case PlanNames.BASIC:
         return { backgroundColor: "#01BAD1", color: "#fff" };
@@ -52,9 +53,11 @@ function usePlans() {
   };
 
   const getPaymentStatusColor = (
-    status: PaymentStatus
+    status: PaymentStatus | string
   ): "success" | "error" => {
-    return status === PaymentStatus.PAID ? "success" : "error";
+    return status === PaymentStatus.PAID || status === "active"
+      ? "success"
+      : "error";
   };
 
   const defaultPlan = plans[0];

@@ -432,7 +432,12 @@ export default function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={client.paymentStatus}
+                        label={
+                          client.paymentStatus === "active" ||
+                          client.paymentStatus === "Pago"
+                            ? "Pago"
+                            : "Em atraso"
+                        }
                         color={getPaymentStatusColor(
                           client.paymentStatus as PaymentStatus
                         )}
