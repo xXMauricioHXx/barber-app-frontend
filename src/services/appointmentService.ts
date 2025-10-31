@@ -123,7 +123,7 @@ export const appointmentService = {
         where("selectedBarber.id", "==", employeeId),
         where("scheduledTime", ">=", Timestamp.fromDate(startOfDay)),
         where("scheduledTime", "<=", Timestamp.fromDate(endOfDay)),
-        orderBy("scheduledTime", "asc")
+        orderBy("createdAt", "desc")
       );
 
       const querySnapshot = await getDocs(q);

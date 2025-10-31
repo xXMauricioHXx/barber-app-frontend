@@ -1,0 +1,382 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import {
+  Box,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Card,
+  CardContent,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  Skeleton,
+} from "@mui/material";
+import { Save as SaveIcon } from "@mui/icons-material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { ptBR } from "date-fns/locale";
+import { CreateClientData } from "@/types/client";
+import { clientService } from "@/services/clientService";
+import { useAuth } from "@/context/AuthContext";
+import { Custom404, Breadcrumbs } from "@/components";
+import usePlans, { PlanNames } from "@/hooks/usePlans";
+import { calculatePlanExpiryDate } from "@/hooks/useClientEligibility";
+
+export default function EditClientPage() {
+  const router = useRouter();
+  const params = useParams();
+  const { user } = useAuth();
+  const { plans, paymentStatuses, defaultPlan, defaultPlanStatus } = usePlans();
+
+  const clientId = params.id as string;
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [clientNotFound, setClientNotFound] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error",
+  });
+
+  const [formData, setFormData] = useState<CreateClientData>({
+    name: "",
+    phone: "",
+    email: "",
+    plan: defaultPlan.name,
+    paymentStatus: defaultPlanStatus,
+    planExpiryDate: calculatePlanExpiryDate(defaultPlan.name),
+  });
+
+  const [errors, setErrors] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
+
+  useEffect(() => {
+    const loadClient = async () => {
+      try {
+        setLoading(true);
+        const clientData = await clientService.getClientById(
+          user?.uid || "",
+          clientId
+        );
+
+        if (!clientData) {
+          setClientNotFound(true);
+          return;
+        }
+
+        setFormData({
+          name: clientData.name,
+          phone: clientData.phone,
+          email: clientData.email || "",
+          plan: clientData.plan!,
+          paymentStatus: clientData.paymentStatus,
+          planExpiryDate:
+            clientData.planExpiryDate ||
+            calculatePlanExpiryDate(clientData.plan!),
+        });
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message:
+            error instanceof Error ? error.message : "Erro ao carregar cliente",
+          severity: "error",
+        });
+        router.push("/barber/clients");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (clientId && user?.uid) {
+      loadClient();
+    }
+  }, [clientId, user?.uid, router]);
+
+  // Se o cliente não foi encontrado, mostra a página 404 customizada
+  if (clientNotFound) {
+    return (
+      <Custom404
+        title="Cliente não encontrado"
+        message="O cliente que você está procurando não existe ou foi removido do sistema. Verifique se o ID está correto ou volte para a lista de clientes."
+        homeLink="/barber/clients"
+        backLink="/barber/clients"
+      />
+    );
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors = {
+      name: "",
+      phone: "",
+      email: "",
+    };
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Nome é obrigatório";
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Telefone é obrigatório";
+    } else if (!/^[\d\s\(\)\-\+]+$/.test(formData.phone)) {
+      newErrors.phone = "Formato de telefone inválido";
+    }
+
+    if (formData.email && formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Formato de email inválido";
+      }
+    }
+
+    setErrors(newErrors);
+    return !newErrors.name && !newErrors.phone && !newErrors.email;
+  };
+
+  const handleInputChange = (
+    field: keyof CreateClientData,
+    value: string | Date
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    if (errors[field as keyof typeof errors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: "",
+      }));
+    }
+  };
+
+  const handlePlanChange = (newPlan: string) => {
+    const planExpiryDate = calculatePlanExpiryDate(newPlan as PlanNames);
+    setFormData((prev) => ({
+      ...prev,
+      plan: newPlan as PlanNames,
+      planExpiryDate,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await clientService.updateClient(user?.uid || "", clientId, formData);
+
+      setSnackbar({
+        open: true,
+        message: "Cliente atualizado com sucesso!",
+        severity: "success",
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message:
+          error instanceof Error ? error.message : "Erro ao atualizar cliente",
+        severity: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    router.push("/barber/clients");
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+      <Box>
+        <Breadcrumbs title={loading ? "Carregando..." : `Editar Cliente`} />
+
+        <Card sx={{ maxWidth: 600 }}>
+          <CardContent sx={{ p: 4 }}>
+            {loading ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <Skeleton variant="rounded" height={56} />
+                <Skeleton variant="rounded" height={56} />
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Skeleton variant="rounded" height={56} sx={{ flex: 1 }} />
+                  <Skeleton variant="rounded" height={56} sx={{ flex: 1 }} />
+                </Box>
+                <Skeleton variant="rounded" height={56} />
+              </Box>
+            ) : (
+              <>
+                <form onSubmit={handleSubmit}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+                  >
+                    <TextField
+                      fullWidth
+                      label="Nome Completo"
+                      value={formData.name}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
+                      error={!!errors.name}
+                      helperText={errors.name}
+                      required
+                      disabled={saving}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Telefone"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                      error={!!errors.phone}
+                      helperText={errors.phone}
+                      placeholder="(11) 99999-9999"
+                      required
+                      disabled={saving}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
+                      error={!!errors.email}
+                      helperText={errors.email}
+                      placeholder="cliente@exemplo.com"
+                      disabled={saving}
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        flexDirection: { xs: "column", sm: "row" },
+                      }}
+                    >
+                      <FormControl fullWidth disabled={saving}>
+                        <InputLabel>Plano</InputLabel>
+                        <Select
+                          value={formData.plan}
+                          label="Plano"
+                          onChange={(e) => handlePlanChange(e.target.value)}
+                        >
+                          {plans.map((plan) => (
+                            <MenuItem key={plan.name} value={plan.name}>
+                              {plan.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth disabled={saving}>
+                        <InputLabel>Status do Pagamento</InputLabel>
+                        <Select
+                          value={formData.paymentStatus}
+                          label="Status do Pagamento"
+                          onChange={(e) =>
+                            handleInputChange("paymentStatus", e.target.value)
+                          }
+                        >
+                          {paymentStatuses.map((status) => (
+                            <MenuItem key={status} value={status}>
+                              {status}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
+
+                    <DatePicker
+                      label="Data de Vencimento do Plano"
+                      value={formData.planExpiryDate}
+                      onChange={(newValue) =>
+                        handleInputChange(
+                          "planExpiryDate",
+                          newValue || new Date()
+                        )
+                      }
+                      disabled={saving}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          helperText:
+                            "A data será calculada automaticamente ao alterar o plano",
+                        },
+                      }}
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        justifyContent: "flex-end",
+                        mt: 2,
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        onClick={handleCancel}
+                        disabled={saving}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        startIcon={
+                          saving ? <CircularProgress size={20} /> : <SaveIcon />
+                        }
+                        disabled={saving}
+                      >
+                        {saving ? "Salvando..." : "Salvar Alterações"}
+                      </Button>
+                    </Box>
+                  </Box>
+                </form>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </LocalizationProvider>
+  );
+}

@@ -61,16 +61,17 @@ export default function ClientStatsCard() {
         };
 
         clients.forEach((client: Client) => {
-          const expiryStatus = getPlanExpiryStatus(client.planExpiryDate);
+          const expiryStatus =
+            client.planExpiryDate && getPlanExpiryStatus(client.planExpiryDate);
           const isEligible = isClientEligibleForBooking(client);
 
           if (client.paymentStatus === "Em Atraso") {
             stats.paymentLate++;
           }
 
-          if (expiryStatus.status === "expired") {
+          if (expiryStatus?.status === "expired") {
             stats.expired++;
-          } else if (expiryStatus.status === "warning") {
+          } else if (expiryStatus?.status === "warning") {
             stats.warning++;
           } else if (isEligible) {
             stats.active++;
